@@ -3,8 +3,7 @@ package edu.isi.bmkeg.utils;
 import org.apache.uima.cas.FSIterator;
 import org.apache.uima.jcas.JCas;
 
-import edu.isi.bmkeg.pdf.DocumentInformation;
-
+import edu.isi.bmkeg.lapdf.uima.DocumentInformation;
 
 public class ISI_UIMA_PDFUtils
 {

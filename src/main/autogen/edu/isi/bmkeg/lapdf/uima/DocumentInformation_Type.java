@@ -1,6 +1,6 @@
 
-/* First created by JCasGen Mon Jul 09 14:06:45 PDT 2012 */
-package edu.isi.bmkeg.pdf;
+/* First created by JCasGen Tue Jun 04 12:15:09 PDT 2013 */
+package edu.isi.bmkeg.lapdf.uima;
 
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.JCasRegistry;
@@ -14,10 +14,11 @@ import org.apache.uima.cas.Feature;
 import org.apache.uima.jcas.tcas.Annotation_Type;
 
 /** 
- * Updated by JCasGen Mon Jul 09 14:06:45 PDT 2012
+ * Updated by JCasGen Tue Jun 04 12:15:09 PDT 2013
  * @generated */
 public class DocumentInformation_Type extends Annotation_Type {
   /** @generated */
+  @Override
   protected FSGenerator getFSGenerator() {return fsGenerator;}
   /** @generated */
   private final FSGenerator fsGenerator = 
@@ -36,10 +37,12 @@ public class DocumentInformation_Type extends Annotation_Type {
   	  }
     };
   /** @generated */
+  @SuppressWarnings ("hiding")
   public final static int typeIndexID = DocumentInformation.typeIndexID;
   /** @generated 
      @modifiable */
-  public final static boolean featOkTst = JCasRegistry.getFeatOkTst("edu.isi.bmkeg.pdf.DocumentInformation");
+  @SuppressWarnings ("hiding")
+  public final static boolean featOkTst = JCasRegistry.getFeatOkTst("edu.isi.bmkeg.lapdf.uima.DocumentInformation");
  
   /** @generated */
   final Feature casFeat_localDocumentId;
@@ -48,13 +51,13 @@ public class DocumentInformation_Type extends Annotation_Type {
   /** @generated */ 
   public String getLocalDocumentId(int addr) {
         if (featOkTst && casFeat_localDocumentId == null)
-      jcas.throwFeatMissing("localDocumentId", "edu.isi.bmkeg.pdf.DocumentInformation");
+      jcas.throwFeatMissing("localDocumentId", "edu.isi.bmkeg.lapdf.uima.DocumentInformation");
     return ll_cas.ll_getStringValue(addr, casFeatCode_localDocumentId);
   }
   /** @generated */    
   public void setLocalDocumentId(int addr, String v) {
         if (featOkTst && casFeat_localDocumentId == null)
-      jcas.throwFeatMissing("localDocumentId", "edu.isi.bmkeg.pdf.DocumentInformation");
+      jcas.throwFeatMissing("localDocumentId", "edu.isi.bmkeg.lapdf.uima.DocumentInformation");
     ll_cas.ll_setStringValue(addr, casFeatCode_localDocumentId, v);}
     
   
@@ -66,13 +69,13 @@ public class DocumentInformation_Type extends Annotation_Type {
   /** @generated */ 
   public String getBmkegUniqueId(int addr) {
         if (featOkTst && casFeat_bmkegUniqueId == null)
-      jcas.throwFeatMissing("bmkegUniqueId", "edu.isi.bmkeg.pdf.DocumentInformation");
+      jcas.throwFeatMissing("bmkegUniqueId", "edu.isi.bmkeg.lapdf.uima.DocumentInformation");
     return ll_cas.ll_getStringValue(addr, casFeatCode_bmkegUniqueId);
   }
   /** @generated */    
   public void setBmkegUniqueId(int addr, String v) {
         if (featOkTst && casFeat_bmkegUniqueId == null)
-      jcas.throwFeatMissing("bmkegUniqueId", "edu.isi.bmkeg.pdf.DocumentInformation");
+      jcas.throwFeatMissing("bmkegUniqueId", "edu.isi.bmkeg.lapdf.uima.DocumentInformation");
     ll_cas.ll_setStringValue(addr, casFeatCode_bmkegUniqueId, v);}
     
   

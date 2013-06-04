@@ -6,7 +6,7 @@
   <vendor/>
   <types>
     <typeDescription>
-      <name>edu.isi.bmkeg.pdf.DocumentInformation</name>
+      <name>edu.isi.bmkeg.lapdf.uima.DocumentInformation</name>
       <description/>
       <supertypeName>uima.tcas.Annotation</supertypeName>
       <features>
