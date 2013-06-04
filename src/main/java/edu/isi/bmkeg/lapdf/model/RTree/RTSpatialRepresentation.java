@@ -24,10 +24,10 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 	private Map<Integer, WordBlock> indexToWordBlockMap;
 	private Map<Integer, ChunkBlock> indexToChunkBlockMap;
 
-	private int mostPopularHorizontalSpaceBetweenWords = -1;
-	private int mostPopularWordWidth = -1;
-	private int mostPopularVerticalSpaceBetweenWords = -1;
-	private int mostPopularWordHeightPerPage = -1;
+	private int mostPopularHorizontalSpaceBetweenWords = -100;
+	private int mostPopularWordWidth = -100;
+	private int mostPopularVerticalSpaceBetweenWords = -100;
+	private int mostPopularWordHeightPerPage = -100;
 	private int[] margin = null;
 	
 	private List<WordBlock> list = null;
@@ -38,7 +38,7 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 	private int minNode = 1; 
 	
 	protected RTSpatialRepresentation() {
-
+		
 		this.indexToWordBlockMap = new HashMap<Integer, WordBlock>();
 		this.indexToChunkBlockMap = new HashMap<Integer, ChunkBlock>();
 		
@@ -197,8 +197,7 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 	@Override
 	public int getMostPopularHorizontalSpaceBetweenWordsPage()
 			throws InvalidPopularSpaceValueException {
-		if (mostPopularHorizontalSpaceBetweenWords != -1) {
-
+		if (mostPopularHorizontalSpaceBetweenWords != -100) {
 			return mostPopularHorizontalSpaceBetweenWords;
 		}
 		IntegerFrequencyCounter avgHorizontalSpaceBetweenWordFrequencyCounter = new IntegerFrequencyCounter(
@@ -229,7 +228,7 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 		} else {
 			mostPopularHorizontalSpaceBetweenWords = mostPopular;
 		}
-		if (mostPopularHorizontalSpaceBetweenWords == -1) {
+		if (mostPopularHorizontalSpaceBetweenWords == -100) {
 			throw new InvalidPopularSpaceValueException(
 					"RTSpatialRepresentation.getMostPopularHorizontalSpaceBetweenWordsPage");
 		}
@@ -241,19 +240,19 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 	private void propagateCalculation()
 			throws InvalidPopularSpaceValueException {
 		
-		if (mostPopularHorizontalSpaceBetweenWords == -1) {
+		if (mostPopularHorizontalSpaceBetweenWords == -100) {
 			getMostPopularHorizontalSpaceBetweenWordsPage();
 		}
 		
-		if (mostPopularWordWidth == -1) {
+		if (mostPopularWordWidth == -100) {
 			getMostPopularWordWidthPage();
 		}
 		
-		if (mostPopularVerticalSpaceBetweenWords == -1) {
+		if (mostPopularVerticalSpaceBetweenWords == -100) {
 			getMostPopularVerticalSpaceBetweenWordsPage();
 		}
 		
-		if (mostPopularWordHeightPerPage == -1) {
+		if (mostPopularWordHeightPerPage == -100) {
 			getMostPopularWordHeightPage();
 		}
 		
@@ -264,7 +263,7 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 	@Override
 	public int getMostPopularVerticalSpaceBetweenWordsPage()
 			throws InvalidPopularSpaceValueException {
-		if (mostPopularVerticalSpaceBetweenWords != -1) {
+		if (mostPopularVerticalSpaceBetweenWords != -100) {
 
 			return mostPopularVerticalSpaceBetweenWords;
 		}
@@ -300,7 +299,7 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 		} else {
 			mostPopularVerticalSpaceBetweenWords = mostPopular;
 		}
-		if (mostPopularVerticalSpaceBetweenWords == -1) {
+		if (mostPopularVerticalSpaceBetweenWords == -100) {
 			throw new InvalidPopularSpaceValueException(
 					"RTSpatialRepresentation.getMostPopularVerticalSpaceBetweenWordsPage");
 		}
@@ -311,7 +310,7 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 
 	@Override
 	public int getMostPopularWordWidthPage() {
-		if (mostPopularWordWidth != -1) {
+		if (mostPopularWordWidth != -100) {
 			return mostPopularWordWidth;
 		}
 		IntegerFrequencyCounter avgWordWidthFrequencyCounter = new IntegerFrequencyCounter(
@@ -341,7 +340,7 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 
 	@Override
 	public int getMostPopularWordHeightPage() {
-		if (mostPopularWordHeightPerPage != -1) {
+		if (mostPopularWordHeightPerPage != -100) {
 			return mostPopularWordHeightPerPage;
 		}
 		IntegerFrequencyCounter avgWordWidthFrequencyCounter = new IntegerFrequencyCounter(
@@ -371,11 +370,11 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 
 	private void propagateWordBasedCalculation() {
 		
-		if (mostPopularWordWidth == -1) {
+		if (mostPopularWordWidth == -100) {
 			getMostPopularWordWidthPage();
 		}
 
-		if (mostPopularWordHeightPerPage == -1) {
+		if (mostPopularWordHeightPerPage == -100) {
 			getMostPopularWordHeightPage();
 		}
 

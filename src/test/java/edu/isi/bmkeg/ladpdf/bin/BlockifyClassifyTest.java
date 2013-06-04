@@ -29,7 +29,7 @@ public class BlockifyClassifyTest extends TestCase
 		inputDir = new File( u.getPath() );
 		outputDir = new File( inputDir.getParentFile().getPath() + "/temp/output" );
 				
-		u = this.getClass().getClassLoader().getResource("rules/plosbiology/epoch_5_7May.drl");
+		u = this.getClass().getClassLoader().getResource("rules/plosbiology/epoch_7Jun_8.csv");
 		ruleFile = new File( u.getPath() );
 
 	}

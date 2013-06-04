@@ -23,7 +23,7 @@ public class LapdfDocument implements Serializable {
 	private IntegerFrequencyCounter avgHeightFrequencyCounter;
 	private FrequencyCounter fontFrequencyCounter;
 	
-	private int mostPopularWordHeight = -1;
+	private int mostPopularWordHeight = -100;
 	private String mostPopularFontStyle = "";
 	private String nextMostPopularFontStyle = "";
 	private String mostPopularFontStyleOnLastPage = "";
@@ -166,7 +166,7 @@ public class LapdfDocument implements Serializable {
 
 	public int readMostPopularWordHeight() {
 		
-		if( this.mostPopularWordHeight != -1 )
+		if( this.mostPopularWordHeight != -100 )
 			return this.mostPopularWordHeight;
 		
 		int mp = this.avgHeightFrequencyCounter.getMostPopular();
@@ -214,8 +214,8 @@ public class LapdfDocument implements Serializable {
 		
 		int x_min = 10000;
 		int y_min = 10000;
-		int x_max = -1;
-		int y_max = -1;
+		int x_max = -100;
+		int y_max = -100;
 		
 		Iterator<PageBlock> pgIt = this.pageList.iterator();
 		while( pgIt.hasNext() ) {

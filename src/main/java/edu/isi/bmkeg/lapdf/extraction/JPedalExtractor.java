@@ -44,6 +44,8 @@ public class JPedalExtractor implements Extractor {
 	private static int pageHeight;
 	private static int pageWidth;
 	private AbstractModelFactory modelFactory;
+	
+	private File currentFile;
 
 	public JPedalExtractor(AbstractModelFactory modelFactory)
 			throws Exception {
@@ -72,6 +74,8 @@ public class JPedalExtractor implements Extractor {
 			PDFDecoder.closePdfFile();
 
 		}
+		
+		this.currentFile = file;
 
 		PDFDecoder.openPdfFile(file.getPath());
 		currentPage = 1;
@@ -118,12 +122,13 @@ public class JPedalExtractor implements Extractor {
 		xml = "<root>" + xml + "</root>";
 
 		try {
+
 			xmlDocument = docBuilder.parse(new ByteArrayInputStream(xml
 					.getBytes("UTF-8")));
 		} catch (SAXException e) {
 
-			// e.printStackTrace();
 			return null;
+
 		}
 
 		Element font = (Element) xmlDocument.getElementsByTagName("font").item(
@@ -159,6 +164,14 @@ public class JPedalExtractor implements Extractor {
 				true, 
 				"&:=()!;\\/\"\"\'\'"
 				);
+		
+		// If there are no words on the page (a common situation 
+		// with splashy handouts), we skip to the next page. 
+		if( words == null ) {
+			currentPage++;
+			PDFDecoder.flushObjectValues(false);
+			return;
+		}
 
 		Iterator<String> wordIterator = words.iterator();
 
@@ -169,11 +182,13 @@ public class JPedalExtractor implements Extractor {
 		}
 
 		while (wordIterator.hasNext()) {
-
+			
 			currentWord = wordIterator.next();
 
 			font = getFontData(currentWord, "face");
-			style = getFontData(currentWord, "style");
+			if( font != null )
+				style = getFontData(currentWord, "style");
+			
 			currentWord = Strip.convertToText(currentWord, true);
 			
 			int wx1 = roundUp(Float.parseFloat((wordIterator.next() + "")));
@@ -183,12 +198,20 @@ public class JPedalExtractor implements Extractor {
 
 			wy1 = dimensions[1] - wy1;
 			wy2 = dimensions[1] - wy2;
-
+			
 			WordBlock wordBlock = modelFactory.createWordBlock(wx1, wy1, wx2,
 					wy2, 1, font, style, currentWord);
 
+			if( font == null || style == null ) {
+				System.err.println(
+						"Minor font error for word on pg." + this.currentPage + 
+						" in '" + this.currentFile.getName() + "', info:" + 
+						wordBlock.toString() + "\n");
+			}
+
+			
 			wordListPerPage.add(wordBlock);
-		
+
 		}
 		
 		currentPage++;
@@ -211,6 +234,7 @@ public class JPedalExtractor implements Extractor {
 
 			} catch (Exception e) {
 			
+				e.printStackTrace();
 				return false;
 			
 			}

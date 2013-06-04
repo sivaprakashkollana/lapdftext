@@ -10,6 +10,10 @@ public class RTSpatialEntity extends Rectangle implements SpatialEntity {
 	
 	private int id;
    
+	public RTSpatialEntity() {
+		super();
+	}
+	
 	public RTSpatialEntity(float x1, float y1, float x2, float y2) {
 	
 		super(x1, y1, x2, y2);
@@ -133,5 +137,5 @@ public class RTSpatialEntity extends Rectangle implements SpatialEntity {
 		return false;
 
 	}
-	
+		
 }

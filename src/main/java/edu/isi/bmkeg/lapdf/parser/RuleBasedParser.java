@@ -127,7 +127,7 @@ public class RuleBasedParser implements Parser {
 			buildChunkBlocks(pageWordBlockList, pageBlock);
 
 			if (isDebugImages()) {
-				PageImageOutlineRenderer.createPageImage(
+				PageImageOutlineRenderer.dumpPageImageToFile(
 						pageBlock,
 						file,
 						file.getName() + "afterBuildBlocks"
@@ -151,7 +151,7 @@ public class RuleBasedParser implements Parser {
 			for (PageBlock page : pageList) {
 
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.createPageImage(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
 							file.getName()
 									+ "beforeBuildBlocksOverlapDeletion_"
 									+ s + "_" + page.getPageNumber()
@@ -161,7 +161,7 @@ public class RuleBasedParser implements Parser {
 				this.deleteHighlyOverlappedChunkBlocks(page);
 
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.createPageImage(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
 							file.getName() + "afterBuildBlocksOverlapDeletion_"
 									+ s + "_" + page.getPageNumber()
 									+ ".png", 0);
@@ -171,7 +171,7 @@ public class RuleBasedParser implements Parser {
 
 				if (isDebugImages()) {
 
-					PageImageOutlineRenderer.createPageImage(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
 							file.getName() + "afterVerticalDivide_" + s
 									+ "_" + page.getPageNumber() + ".png", 0);
 				}
@@ -179,7 +179,7 @@ public class RuleBasedParser implements Parser {
 				this.joinLines(page);
 
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.createPageImage(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
 							file.getName() + "afterJoinLines_" + s + "_"
 									+ page.getPageNumber() + ".png", 0);
 				}
@@ -187,7 +187,7 @@ public class RuleBasedParser implements Parser {
 				this.divideBlocksHorizontally(page);
 
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.createPageImage(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
 							file.getName() + "afterHorizontalDivide_" + s
 									+ "_" + page.getPageNumber() + ".png", 0);
 				}
@@ -195,7 +195,7 @@ public class RuleBasedParser implements Parser {
 				this.deleteHighlyOverlappedChunkBlocks(page);
 
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.createPageImage(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
 							file.getName() + "/afterOverlapDeletion_" + s
 									+ "_" + page.getPageNumber() + ".png", 0);
 				}
@@ -345,8 +345,8 @@ public class RuleBasedParser implements Parser {
 		int currentX = 0;
 		int currentY = 0;
 		int currentWidth = 0;
-		Integer[] currentSpace = new Integer[] { -1, -1 };
-		Integer[] currentWidestSpace = new Integer[] { -1, -1 };
+		Integer[] currentSpace = new Integer[] { -100, -100 };
+		Integer[] currentWidestSpace = new Integer[] { -100, -100 };
 
 		PageBlock parent = (PageBlock) block.getContainer();
 		List<SpatialEntity> wordBlockList = parent.containsByType(block,
@@ -370,8 +370,8 @@ public class RuleBasedParser implements Parser {
 					spaceList.add(new Integer[] { currentWidestSpace[0],
 							currentWidestSpace[1] });
 				}
-				currentWidestSpace[0] = -1;
-				currentWidestSpace[1] = -1;
+				currentWidestSpace[0] = -100;
+				currentWidestSpace[1] = -100;
 				continue;
 			}
 
@@ -384,7 +384,7 @@ public class RuleBasedParser implements Parser {
 			currentSpace[1] = currentX - (previousX + previousWidth);
 			currentSpace[0] = currentX + currentWidth;
 
-			if (currentWidestSpace[1] == -1
+			if (currentWidestSpace[1] == -100
 					|| currentSpace[1] > currentWidestSpace[1]) {
 				currentWidestSpace[0] = currentSpace[0];
 				currentWidestSpace[1] = currentSpace[1];

@@ -11,9 +11,9 @@ public class IntegerFrequencyCounter implements Serializable
 
     Map<Integer, Integer> freq = new HashMap<Integer, Integer>();
     int kernel;
-    int max = 0;
-    int mp = 0;
-    int nmp = 0;
+    int max = -100;
+    int mp = -100;
+    int nmp = -100;
 
     public String getDebug()
     {
@@ -54,8 +54,8 @@ public class IntegerFrequencyCounter implements Serializable
     {
         int i = ii.intValue();
 
-        max = -1;
-        mp = -1;
+        max = -100;
+        mp = -100;
 
         for(int j = i - kernel; j <= i + kernel; j++)
         {

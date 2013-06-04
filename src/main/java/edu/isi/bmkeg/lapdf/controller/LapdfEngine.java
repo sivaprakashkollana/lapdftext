@@ -1,5 +1,6 @@
 package edu.isi.bmkeg.lapdf.controller;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -147,7 +148,7 @@ public class LapdfEngine  {
 				+ stem + "_spatial.xml");
 
 		if( this.isImgFlag() )
-			this.renderImageOutlines(doc, outDir, stem, LapdfMode.BLOCK_ONLY);
+			this.dumpImageOutlinesToFiles(doc, outDir, stem, LapdfMode.BLOCK_ONLY);
 		
 		SpatialXMLWriter sxw = new SpatialXMLWriter();
 		sxw.write(doc, outDir.getPath() + "/" + stem + "_spatial.xml");
@@ -200,7 +201,7 @@ public class LapdfEngine  {
 		classifyDocument(doc, this.getRuleFile());
 		
 		if( this.isImgFlag() )
-			this.renderImageOutlines(doc, outDir, stem, LapdfMode.CLASSIFY);
+			this.dumpImageOutlinesToFiles(doc, outDir, stem, LapdfMode.CLASSIFY);
 		
 		logger.info("Writing block classified XML in OpenAccess format "
 						+ outDir.getPath() + "/" + stem + "_rhetorical.xml");
@@ -253,7 +254,7 @@ public class LapdfEngine  {
 		classifyDocument(doc, this.getRuleFile());
 		
 		if( this.isImgFlag() )
-			this.renderImageOutlines(doc, outDir, stem, LapdfMode.SECTION_FILTER);
+			this.dumpImageOutlinesToFiles(doc, outDir, stem, LapdfMode.SECTION_FILTER);
 
 		
 		SpatiallyOrderedChunkTypeFilteredTextWriter soctftw = 
@@ -283,6 +284,9 @@ public class LapdfEngine  {
 	// File Processing functions
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+
+	
 	/**
 	 * Extracts the blocks within file to generate a LapdfDocument Object
 	 * @param file - input file
@@ -316,7 +320,7 @@ public class LapdfEngine  {
 		this.classifyDocument(document, f);
 		
 		if( this.isImgFlag() )
-			this.renderImageOutlines(document, new File("."), "debug", LapdfMode.CLASSIFY);
+			this.dumpImageOutlinesToFiles(document, new File("."), "debug", LapdfMode.CLASSIFY);
 		
 	}
 	
@@ -346,15 +350,17 @@ public class LapdfEngine  {
 		}
 
 	}
-
+	
 	public String readBasicText(LapdfDocument document) 
 			throws IOException,FileNotFoundException {
 
 		List<Set<String>> stack = new ArrayList<Set<String>>();
+		
 		Set<String> sections = new HashSet<String>();		
 		sections.add(Block.TYPE_BODY);
 		sections.add(Block.TYPE_HEADING);
 		stack.add(sections);
+		
 		sections = new HashSet<String>();		
 		sections.add(Block.TYPE_FIGURE_LEGEND);
 		stack.add(sections);
@@ -363,7 +369,65 @@ public class LapdfEngine  {
 		
 	}
 
-	
+	public String readCompleteText(LapdfDocument document) 
+			throws IOException,FileNotFoundException {
+
+		List<Set<String>> stack = new ArrayList<Set<String>>();
+		
+		Set<String> sections1 = new HashSet<String>();		
+		sections1.add(Block.TYPE_TITLE);
+		sections1.add(Block.TYPE_AUTHORS);
+		sections1.add(Block.TYPE_CITATION);
+		stack.add(sections1);
+		
+		Set<String> sections2 = new HashSet<String>();		
+		sections2.add(Block.TYPE_ABSTRACT);
+		sections2.add(Block.TYPE_ABSTRACT_HEADING);
+		sections2.add(Block.TYPE_ABSTRACT_BODY);
+		stack.add(sections2);
+		
+		Set<String> sections3 = new HashSet<String>();		
+		sections3.add(Block.TYPE_BODY);
+		sections3.add(Block.TYPE_HEADING);
+		sections3.add(Block.TYPE_METHODS);
+		sections3.add(Block.TYPE_METHODS_HEADING);
+		sections3.add(Block.TYPE_METHODS_BODY);
+		sections3.add(Block.TYPE_METHODS_SUBTITLE);
+		sections3.add(Block.TYPE_RESULTS);
+		sections3.add(Block.TYPE_RESULTS_HEADING);
+		sections3.add(Block.TYPE_RESULTS_BODY);
+		sections3.add(Block.TYPE_RESULTS_SUBTITLE);
+		sections3.add(Block.TYPE_DISCUSSION);
+		sections3.add(Block.TYPE_DISCUSSION_HEADING);
+		sections3.add(Block.TYPE_DISCUSSION_BODY);
+		sections3.add(Block.TYPE_DISCUSSION_SUBTITLE);
+		sections3.add(Block.TYPE_DISCUSSION);
+		sections3.add(Block.TYPE_CONCLUSIONS);
+		sections3.add(Block.TYPE_CONCLUSIONS_HEADING);
+		sections3.add(Block.TYPE_CONCLUSIONS_BODY);
+		sections3.add(Block.TYPE_CONCLUSIONS_SUBTITLE);
+		sections3.add(Block.TYPE_INTRODUCTION);
+		sections3.add(Block.TYPE_INTRODUCTION_HEADING);
+		sections3.add(Block.TYPE_INTRODUCTION_BODY);
+		sections3.add(Block.TYPE_INTRODUCTION_SUBTITLE);
+		stack.add(sections3);
+		
+		Set<String> sections4 = new HashSet<String>();		
+		sections4.add(Block.TYPE_ACKNOWLEDGEMENTS);
+		sections4.add(Block.TYPE_ACKNOWLEDGEMENTS_HEADING);
+		sections4.add(Block.TYPE_ACKNOWLEDGEMENTS_BODY);
+		stack.add(sections4);
+
+		Set<String> sections5 = new HashSet<String>();		
+		sections5.add(Block.TYPE_FIGURE_LEGEND);
+		sections5.add(Block.TYPE_TABLE);
+		stack.add(sections5);
+				
+		String text = this.readClassifiedText(document, stack);
+		
+		return text;
+		
+	}
 
 	public String readClassifiedText(LapdfDocument document, List<Set<String>> stack) 
 			throws IOException,FileNotFoundException {
@@ -473,17 +537,34 @@ public class LapdfEngine  {
 	 * @param mode
 	 * @throws IOException
 	 */
-	public void renderImageOutlines(LapdfDocument doc, File dir, String stem, int lapdfMode) 
+	public void dumpImageOutlinesToFiles(LapdfDocument doc, File dir, String stem, int lapdfMode) 
 			throws IOException {
 		
 		for (int i = 1; i <= doc.getTotalNumberOfPages(); i++) {
 			PageBlock page = doc.getPage(i);
 			File imgFile = new File(dir.getPath() + "/" + stem + "_" + page.getPageNumber() + ".png");
-			PageImageOutlineRenderer.createPageImage(page, 
+			PageImageOutlineRenderer.dumpPageImageToFile(page, 
 					imgFile, 
 					stem + "_" + page.getPageNumber(), 
 					lapdfMode);
 		}
+		
+	}
+	
+	public List<BufferedImage> buildPageImageList(LapdfDocument doc, String stem, int lapdfMode) 
+			throws IOException {
+		
+		List<BufferedImage> imgList = new ArrayList<BufferedImage>();
+		
+		for (int i = 1; i <= doc.getTotalNumberOfPages(); i++) {
+			PageBlock page = doc.getPage(i);
+			BufferedImage img = PageImageOutlineRenderer.createPageImage(page, 
+					stem + "_" + page.getPageNumber(), 
+					lapdfMode);
+			imgList.add(img);
+		}
+		
+		return imgList;
 		
 	}
 	

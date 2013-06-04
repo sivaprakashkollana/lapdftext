@@ -25,6 +25,10 @@ public class RTWordBlock extends RTSpatialEntity implements WordBlock {
 
 	}
 
+	public void setFont(String font) {
+		this.font = font;
+	}
+
 	@Override
 	public String getFont() {
 
@@ -38,16 +42,28 @@ public class RTWordBlock extends RTSpatialEntity implements WordBlock {
 
 	}
 
+	public void setFontStyle(String fontStyle) {
+		this.fontStyle = fontStyle;
+	}
+
 	@Override
 	public String getWord() {
 
 		return this.word;
 	}
 
+	public void setWord(String word) {
+		this.word = word;
+	}
+
 	@Override
 	public int getSpaceWidth() {
 
 		return this.spaceWidth;
+	}
+
+	public void setSpaceWidth(int spaceWidth) {
+		this.spaceWidth = spaceWidth;
 	}
 
 	@Override

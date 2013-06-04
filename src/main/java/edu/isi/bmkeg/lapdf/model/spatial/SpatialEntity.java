@@ -1,7 +1,9 @@
 package edu.isi.bmkeg.lapdf.model.spatial;
 
+import java.io.Serializable;
 
-public interface SpatialEntity {
+
+public interface SpatialEntity extends Serializable {
 
 	public SpatialEntity union(SpatialEntity entity);
 
@@ -14,7 +16,7 @@ public interface SpatialEntity {
 	public int getX1();
 
 	public int getX2();
-
+	
 	public int getHeight();
 
 	public int getWidth();
@@ -26,5 +28,6 @@ public interface SpatialEntity {
 	public int getId();
 	
 	public void setId(int id);
+
 
 }

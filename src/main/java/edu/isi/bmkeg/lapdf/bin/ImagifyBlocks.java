@@ -86,7 +86,7 @@ public class ImagifyBlocks
 				try {
 	
 					LapdfDocument lapdf = engine.blockifyPdfFile(pdf);
-					engine.renderImageOutlines(lapdf, outImgDir, pdfStem, LapdfMode.BLOCK_ONLY);
+					engine.dumpImageOutlinesToFiles(lapdf, outImgDir, pdfStem, LapdfMode.BLOCK_ONLY);
 				
 				} catch (Exception e) {
 				
@@ -107,7 +107,7 @@ public class ImagifyBlocks
 				outImgDir.mkdir();
 			
 			LapdfDocument lapdf = engine.blockifyPdfFile(inputFileOrDir);
-			engine.renderImageOutlines(lapdf, outImgDir, pdfStem, LapdfMode.BLOCK_ONLY);
+			engine.dumpImageOutlinesToFiles(lapdf, outImgDir, pdfStem, LapdfMode.BLOCK_ONLY);
 			
 		}
 	

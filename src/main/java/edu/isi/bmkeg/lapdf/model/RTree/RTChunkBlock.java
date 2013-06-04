@@ -27,6 +27,10 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 	private String type = Block.TYPE_UNCLASSIFIED;
 	private Boolean headerOrFooter=null;
 
+	public RTChunkBlock() {
+		super();
+	}
+
 	public RTChunkBlock(int x1, int y1, int x2,int y2) {
 		super(x1, y1, x2, y2);
 	}
@@ -348,5 +352,14 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 		 return l;
 		 
 	}
+	
+	/* Need to implement these functions 
+	 * to handle issues with serialization
+	 private void writeObject(java.io.ObjectOutputStream out)
+		     throws IOException
+		 private void readObject(java.io.ObjectInputStream in)
+		     throws IOException, ClassNotFoundException;
+		 private void readObjectNoData() 
+		     throws ObjectStreamException;*/
 
 }

@@ -30,7 +30,15 @@ public class PageImageOutlineRenderer {
 	private static TreeMap<String, Integer> countMap = new TreeMap<String, Integer>();
 	private static final int TYPE_UNCLASSIFIED_COLOR_CODE = 0xFBF5EF;
 
-	public static void createPageImage(PageBlock page, File outputFile, String label, int mode) throws IOException {
+	public static void dumpPageImageToFile(PageBlock page, File outputFile, String label, int mode) throws IOException {
+
+		BufferedImage image = PageImageOutlineRenderer.createPageImage(page, label, mode);
+		
+		ImageIO.write(image, "png", outputFile);
+
+	}
+
+	public static BufferedImage createPageImage(PageBlock page, String label, int mode) throws IOException {
 
 		int width = page.getPageBoxWidth();
 		int height = page.getPageBoxHeight();
@@ -54,10 +62,12 @@ public class PageImageOutlineRenderer {
 		list = new ArrayList<Block>(wbList);
 		renderBlockByColor(list, image, mode);
 
-		ImageIO.write(image, "png", outputFile);
+		return image;
 
 	}
 
+	
+	
 	private static void renderBlockByColor(
 			List<Block> entityList,
 			BufferedImage image, int mode) {

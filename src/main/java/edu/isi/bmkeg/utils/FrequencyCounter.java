@@ -43,7 +43,7 @@ public class FrequencyCounter implements Serializable {
 
 	public Object getNextMostPopular() {
 		
-		int max = 0;
+		int max = -100;
 		
 		Object nmp = null;
 		
@@ -65,7 +65,7 @@ public class FrequencyCounter implements Serializable {
 
 	public Object getThirdMostPopular() {
 		
-		int max = 0;
+		int max = -100;
 
 		Object nnmp = null;
 

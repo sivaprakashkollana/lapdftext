@@ -150,7 +150,7 @@ public class PdfDirWatcher extends DirWatcher {
 
 			try {
 				LapdfDocument lapdf = engine.blockifyPdfFile(pdf);
-				engine.renderImageOutlines(lapdf, out, pdfStem,
+				engine.dumpImageOutlinesToFiles(lapdf, out, pdfStem,
 						LapdfMode.BLOCK_ONLY);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -166,7 +166,7 @@ public class PdfDirWatcher extends DirWatcher {
 			try {
 				LapdfDocument lapdf = engine.blockifyPdfFile(pdf);
 				engine.classifyDocument(lapdf, ruleFile);
-				engine.renderImageOutlines(lapdf, out, pdfStem,
+				engine.dumpImageOutlinesToFiles(lapdf, out, pdfStem,
 						LapdfMode.CLASSIFY);
 			} catch (Exception e) {
 				e.printStackTrace();
