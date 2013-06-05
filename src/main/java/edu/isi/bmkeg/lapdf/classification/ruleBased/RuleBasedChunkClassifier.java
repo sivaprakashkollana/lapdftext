@@ -1,5 +1,6 @@
 package edu.isi.bmkeg.lapdf.classification.ruleBased;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +19,11 @@ import org.drools.io.Resource;
 import org.drools.io.ResourceFactory;
 import org.drools.runtime.StatelessKnowledgeSession;
 
-import edu.isi.bmkeg.lapdf.bin.CommandLineTool;
 import edu.isi.bmkeg.lapdf.classification.Classifier;
 import edu.isi.bmkeg.lapdf.features.ChunkFeatures;
 import edu.isi.bmkeg.lapdf.model.ChunkBlock;
 import edu.isi.bmkeg.lapdf.model.factory.AbstractModelFactory;
+import edu.isi.bmkeg.utils.Converters;
 /**
  * Rule based classification of blocks using drools. 
  * @author cartic
@@ -52,6 +53,13 @@ public class RuleBasedChunkClassifier implements Classifier<ChunkBlock> {
 		KnowledgeBuilder kbuilder = KnowledgeBuilderFactory.newKnowledgeBuilder();
 		kbase = KnowledgeBaseFactory.newKnowledgeBase();
 		
+		File expandedFile = null;
+		if( droolsFileName.contains(".jar!") || droolsFileName.contains(".zip!") ) {
+			File fileInArchive = new File(droolsFileName);
+			expandedFile = Converters.retrieveFileFromArchive(fileInArchive);
+			droolsFileName = expandedFile.getPath();
+		}
+			
 		if(droolsFileName.endsWith(".csv")) {
 			
 			DecisionTableConfiguration dtableconfiguration =
@@ -87,6 +95,11 @@ public class RuleBasedChunkClassifier implements Classifier<ChunkBlock> {
 
 		if (kbuilder.hasErrors()) {
 			logger.error(kbuilder.getErrors());
+			
+			if( expandedFile != null ) {
+				Converters.recursivelyDeleteFiles(expandedFile.getParentFile());
+			}
+			
 			return;
 		}
 		
@@ -96,6 +109,8 @@ public class RuleBasedChunkClassifier implements Classifier<ChunkBlock> {
 		kbase.addKnowledgePackages(kpkgs);
 		
 		this.modelFactory = modelFactory;
+		
+		
 	
 	}
 

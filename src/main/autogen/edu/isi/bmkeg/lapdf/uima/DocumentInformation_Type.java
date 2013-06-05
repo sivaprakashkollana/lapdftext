@@ -1,5 +1,5 @@
 
-/* First created by JCasGen Tue Jun 04 12:15:09 PDT 2013 */
+/* First created by JCasGen Tue Jun 04 23:28:23 PDT 2013 */
 package edu.isi.bmkeg.lapdf.uima;
 
 import org.apache.uima.jcas.JCas;
@@ -14,7 +14,7 @@ import org.apache.uima.cas.Feature;
 import org.apache.uima.jcas.tcas.Annotation_Type;
 
 /** 
- * Updated by JCasGen Tue Jun 04 12:15:09 PDT 2013
+ * Updated by JCasGen Tue Jun 04 23:28:23 PDT 2013
  * @generated */
 public class DocumentInformation_Type extends Annotation_Type {
   /** @generated */
