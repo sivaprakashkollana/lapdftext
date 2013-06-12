@@ -71,7 +71,7 @@
 						</goals>
 						<configuration>
 							<sources>
-								<source>${basedir}/src/autogen</source>
+								<source>${basedir}/src/main/autogen</source>
 							</sources>
 						</configuration>
 					</execution>
