@@ -69,8 +69,9 @@ public class LapdfEngine  {
 			throws Exception {
 
 		this.parser = new RuleBasedParser(new RTModelFactory());
-		URL u = this.getClass().getClassLoader().getResource("rules/general.drl");
-		this.setRuleFile(new File(u.getPath()));
+		File rf = Converters
+		.extractFileFromJarClasspath("rules/general.drl");
+		this.setRuleFile(rf);
 
 	}
 
