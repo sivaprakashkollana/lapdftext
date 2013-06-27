@@ -42,7 +42,7 @@
 					<arguments>
 						<argument>file:${basedir}/src/main/resources/desc/typeSystem/LAPDFTextTypeSystemDescriptor.xml
 						</argument>
-						<argument>${basedir}/src/main/autogen</argument>
+						<argument>${project.build.directory}/generated-sources/jcasgen</argument>
 					</arguments>
 				</configuration>
 			</plugin>
@@ -59,7 +59,7 @@
 						</goals>
 						<configuration>
 							<sources>
-								<source>${basedir}/src/main/autogen</source>
+								<source>${project.build.directory}/generated-sources/jcasgen</source>
 							</sources>
 						</configuration>
 					</execution>
