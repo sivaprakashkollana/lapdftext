@@ -34,7 +34,7 @@ public class SpatialLayoutFeaturesReportGenerator implements TextWriter
 		sb.append("\nMost popular font size "+chunk.getMostPopularWordStyle());
 		sb.append("\nMost popular word height "+chunk.getMostPopularWordHeight());
 		sb.append("\nNumber of Lines "+chunk.readNumberOfLine());
-		sb.append("\nAlignment "+chunk.readLeftRightMedLine());
+		sb.append("\nAlignment "+chunk.readLeftRightMidLine());
 
 		return sb;
 	}

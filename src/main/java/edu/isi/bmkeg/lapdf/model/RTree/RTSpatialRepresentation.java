@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.infomatiq.jsi.Point;
 import com.infomatiq.jsi.Rectangle;
 import com.infomatiq.jsi.rtree.RTree;
 
@@ -78,6 +79,7 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 	public List<SpatialEntity> intersects(SpatialEntity entity, String ordering) {
 
 		return this.intersectsByType(entity, ordering, null);
+	
 	}
 
 	@Override
@@ -146,6 +148,19 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 	}
 
 	@Override
+	public SpatialEntity nearest(int x, int y, int maxDistance) {
+
+		RTSimpleProcedure procedure = new RTSimpleProcedure(this);
+
+		Point p = new Point(x, y);
+		
+		this.tree.nearest(p, procedure, maxDistance);
+
+		return procedure.getFoundEntity();
+	}
+	
+	
+	@Override
 	public List<SpatialEntity> intersectsByType(SpatialEntity entity,
 			String ordering, Class classType) {
 
@@ -195,11 +210,12 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 	}
 
 	@Override
-	public int getMostPopularHorizontalSpaceBetweenWordsPage()
-			throws InvalidPopularSpaceValueException {
+	public int getMostPopularHorizontalSpaceBetweenWordsPage() {
+		
 		if (mostPopularHorizontalSpaceBetweenWords != -100) {
 			return mostPopularHorizontalSpaceBetweenWords;
 		}
+		
 		IntegerFrequencyCounter avgHorizontalSpaceBetweenWordFrequencyCounter = new IntegerFrequencyCounter(
 				1);
 		if (list == null)
@@ -228,17 +244,13 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 		} else {
 			mostPopularHorizontalSpaceBetweenWords = mostPopular;
 		}
-		if (mostPopularHorizontalSpaceBetweenWords == -100) {
-			throw new InvalidPopularSpaceValueException(
-					"RTSpatialRepresentation.getMostPopularHorizontalSpaceBetweenWordsPage");
-		}
+
 		propagateCalculation();
 		// System.out.println("Returning mostPopularHorizontalSpaceBetweenWords"+mostPopularHorizontalSpaceBetweenWords);
 		return mostPopularHorizontalSpaceBetweenWords;
 	}
 
-	private void propagateCalculation()
-			throws InvalidPopularSpaceValueException {
+	private void propagateCalculation() {
 		
 		if (mostPopularHorizontalSpaceBetweenWords == -100) {
 			getMostPopularHorizontalSpaceBetweenWordsPage();
@@ -261,12 +273,12 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 	}
 
 	@Override
-	public int getMostPopularVerticalSpaceBetweenWordsPage()
-			throws InvalidPopularSpaceValueException {
+	public int getMostPopularVerticalSpaceBetweenWordsPage() {
+		
 		if (mostPopularVerticalSpaceBetweenWords != -100) {
-
 			return mostPopularVerticalSpaceBetweenWords;
 		}
+		
 		IntegerFrequencyCounter verticalSpaceBetweenWordFrequencyCounter = new IntegerFrequencyCounter(
 				1);
 		if (list == null)
@@ -299,11 +311,9 @@ public class RTSpatialRepresentation implements SpatialRepresentation {
 		} else {
 			mostPopularVerticalSpaceBetweenWords = mostPopular;
 		}
-		if (mostPopularVerticalSpaceBetweenWords == -100) {
-			throw new InvalidPopularSpaceValueException(
-					"RTSpatialRepresentation.getMostPopularVerticalSpaceBetweenWordsPage");
-		}
+
 		propagateCalculation();
+		
 		// System.out.println("Returning mostPopularVerticalSpaceBetweenWords"+mostPopularVerticalSpaceBetweenWords);
 		return mostPopularVerticalSpaceBetweenWords;
 	}

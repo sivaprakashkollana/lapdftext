@@ -1,9 +1,11 @@
 package edu.isi.bmkeg.lapdf.model.RTree;
 
 import java.awt.geom.Rectangle2D;
+import java.util.Collection;
 
 import com.infomatiq.jsi.Rectangle;
 
+import edu.isi.bmkeg.lapdf.model.WordBlock;
 import edu.isi.bmkeg.lapdf.model.spatial.SpatialEntity;
 
 public class RTSpatialEntity extends Rectangle implements SpatialEntity {
@@ -137,5 +139,6 @@ public class RTSpatialEntity extends Rectangle implements SpatialEntity {
 		return false;
 
 	}
+	
 		
 }

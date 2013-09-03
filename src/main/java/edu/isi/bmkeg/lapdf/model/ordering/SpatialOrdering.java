@@ -46,8 +46,8 @@ public class SpatialOrdering implements Comparator<SpatialEntity> {
 
 	private int camdOrdering(SpatialEntity o1, SpatialEntity o2) {
 
-		String o1Allignment = ((Block) o1).readLeftRightMedLine();
-		String o2Allignment = ((Block) o2).readLeftRightMedLine();
+		String o1Allignment = ((Block) o1).readLeftRightMidLine();
+		String o2Allignment = ((Block) o2).readLeftRightMidLine();
 		int pageNumber = ((PageBlock) ((Block) o1).getContainer())
 				.getPageNumber();
 		int o1y1 = o1.getY1();
@@ -96,9 +96,7 @@ public class SpatialOrdering implements Comparator<SpatialEntity> {
 
 	private int verticalOrdering(SpatialEntity o1, SpatialEntity o2) {
 		Block block = (Block) o1;
-		PageBlock page = (PageBlock) ((block.getContainer() instanceof PageBlock) ? block
-				.getContainer()
-				: block.getContainer().getContainer());
+		PageBlock page = block.getPage();
 		int y1Diff = o1.getY1() - o2.getY1();
 		
 		if (Math.abs(y1Diff) < page.getMostPopularWordHeightPage()/2)

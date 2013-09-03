@@ -1,7 +1,9 @@
 package edu.isi.bmkeg.lapdf.model.spatial;
 
 import java.io.Serializable;
+import java.util.Collection;
 
+import edu.isi.bmkeg.lapdf.model.WordBlock;
 
 public interface SpatialEntity extends Serializable {
 
@@ -28,6 +30,6 @@ public interface SpatialEntity extends Serializable {
 	public int getId();
 	
 	public void setId(int id);
-
-
+	
+	
 }

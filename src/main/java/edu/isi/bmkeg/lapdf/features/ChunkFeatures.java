@@ -81,7 +81,7 @@ public class ChunkFeatures {
 	 * @return
 	 */
 	public boolean isAlignedLeft() {
-		if (Block.LEFT.equalsIgnoreCase(chunk.readLeftRightMedLine()))
+		if (Block.LEFT.equalsIgnoreCase(chunk.readLeftRightMidLine()))
 			return true;
 		return false;
 	}
@@ -127,7 +127,7 @@ public class ChunkFeatures {
 	 */
 	public boolean isAlignedRight() {
 	
-		if (Block.RIGHT.equalsIgnoreCase(chunk.readLeftRightMedLine()))
+		if (Block.RIGHT.equalsIgnoreCase(chunk.readLeftRightMidLine()))
 			return true;
 		
 		return false;
@@ -139,7 +139,7 @@ public class ChunkFeatures {
 	 * @return
 	 */
 	public boolean isAlignedMiddle() {
-		if (Block.MIDLINE.equalsIgnoreCase(chunk.readLeftRightMedLine()))
+		if (Block.MIDLINE.equalsIgnoreCase(chunk.readLeftRightMidLine()))
 			return true;
 		return false;
 	}
@@ -274,7 +274,7 @@ public class ChunkFeatures {
 	 */
 	public boolean isAlignedWithColumnBoundaries() {
 		
-		String lrm = chunk.readLeftRightMedLine();
+		String lrm = chunk.readLeftRightMidLine();
 		int columnLeft = 0;
 		int columnRight = 0;
 //		double threshold = chunk.getMostPopularWordHeight() * 1.5;
@@ -428,7 +428,7 @@ public class ChunkFeatures {
 
 		int chunkMedian = chunk.getX1() + chunk.getWidth() / 2;
 		int pageMedian = parent.getMedian();
-		String lrm = chunk.readLeftRightMedLine();
+		String lrm = chunk.readLeftRightMidLine();
 
 		if (chunk.MIDLINE.equalsIgnoreCase(lrm)) {
 			if (Math.abs(pageMedian - chunkMedian) < parent.getDocument()

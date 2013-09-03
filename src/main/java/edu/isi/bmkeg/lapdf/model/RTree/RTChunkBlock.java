@@ -26,6 +26,10 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 	private String alignment = null;
 	private String type = Block.TYPE_UNCLASSIFIED;
 	private Boolean headerOrFooter=null;
+	
+	private double density = -1;
+	
+	private List<WordBlock> rotatedWords = new ArrayList<WordBlock>();
 
 	public RTChunkBlock() {
 		super();
@@ -70,7 +74,6 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 	public void setMostPopularWordHeight(int height) {
 		this.mostPopularWordHeight = height;
 	}
-	
 
 	@Override
 	public String getMostPopularWordStyle() {
@@ -96,7 +99,17 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 	public void setContainer(Block block) {
 		this.container = (PageBlock) block;
 	}
+	
+	@Override
+	public PageBlock getPage() {
+		return (PageBlock) this.container;
+	}
 
+	@Override
+	public void setPage(PageBlock page) {
+		this.container = page;
+	}
+	
 	@Override
 	public String getType() {
 		return type;
@@ -106,11 +119,19 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 	public void setType(String type) {
 		this.type = type;
 	}
+	
+	public List<WordBlock> getRotatedWords() {
+		return rotatedWords;
+	}
+
+	public void setRotatedWords(List<WordBlock> rotatedWords) {
+		this.rotatedWords = rotatedWords;
+	}
 
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	@Override
-	public String readLeftRightMedLine() {
+	public String readLeftRightMidLine() {
 		
 		if (alignment != null)
 			return alignment;
@@ -122,8 +143,8 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 		int averageWordHeightForTheDocument = parent.getDocument().readMostPopularWordHeight();
 
 		// Conditions for left
-		if (X1 < median
-				&& (X1 + width) < (median + averageWordHeightForTheDocument))
+		if (X1 < median && 
+				(X1 + width) < (median + averageWordHeightForTheDocument))
 			return LEFT;
 		// conditions for right
 		if (X1 > median)
@@ -149,7 +170,7 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 	public boolean isFlush(String condition, int value) {
 		PageBlock parent = (PageBlock) this.getContainer();
 		int median = parent.getMedian();
-		String leftRightMidline = this.readLeftRightMedLine();
+		String leftRightMidline = this.readLeftRightMidLine();
 
 		int x1 = this.getX1();
 		int x2 = this.getX2();
@@ -221,7 +242,10 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 		StringBuilder builder = new StringBuilder();
 		for (SpatialEntity entity : wordBlockList) {
 			builder.append( ((WordBlock) entity).getWord() );
-		
+
+			if( ((WordBlock) entity).getWord() == null )
+				continue;
+			
 			if( !((WordBlock) entity).getWord().endsWith("-") )
 				builder.append(" ");
 
@@ -259,7 +283,7 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 
 		return false;
 	}
-	
+		
 	/**
 	 * returns true if chunk block has neighbors of specific type within specified distance
 	 * @param type
@@ -351,6 +375,30 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 
 		 return l;
 		 
+	}
+
+	@Override
+	public double readDensity() {
+		
+		if( this.density < 0.0 ) {
+	
+			PageBlock page = (PageBlock) this.getContainer();
+			List<SpatialEntity> wordBlockList = page.containsByType(this,
+					SpatialOrdering.MIXED_MODE, 
+					WordBlock.class);
+			double chunkSize = this.width() * this.height();
+			double wordCoverage = 0.0;
+			for (int i = 0; i < wordBlockList.size(); i++) {
+				WordBlock wordBlock = (WordBlock) wordBlockList.get(i);
+				wordCoverage += wordBlock.getHeight() * wordBlock.getWidth();
+			}
+				
+			this.density = wordCoverage / chunkSize;
+			
+		}
+
+		return this.density;
+		
 	}
 	
 	/* Need to implement these functions 

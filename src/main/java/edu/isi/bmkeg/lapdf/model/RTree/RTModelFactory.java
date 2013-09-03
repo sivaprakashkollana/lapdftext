@@ -32,6 +32,7 @@ public class RTModelFactory implements AbstractModelFactory {
 				spaceWidth, font, style, word);
 
 		return wordy;
+		
 	}
 
 }

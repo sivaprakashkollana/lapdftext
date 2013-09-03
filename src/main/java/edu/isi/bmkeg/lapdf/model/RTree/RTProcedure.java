@@ -21,6 +21,7 @@ public class RTProcedure implements TIntProcedure {
 
 	public RTProcedure(RTSpatialRepresentation tree, String ordering,
 			RTSpatialEntity sourceEntity, Class type, boolean isContainmentQuery) {
+		
 		this.tree = tree;
 		if (ordering != null) {
 			foundEntities = new TreeSet<SpatialEntity>(new SpatialOrdering(
@@ -36,6 +37,7 @@ public class RTProcedure implements TIntProcedure {
 
 	@Override
 	public boolean execute(int id) {
+		
 		SpatialEntity entity = this.tree.getEntity(id);
 
 		if (type != null) {
@@ -44,9 +46,12 @@ public class RTProcedure implements TIntProcedure {
 				this.foundEntities.add(entity);
 			}
 			return true;
+		
 		} else if (!sourceEnity.equals(entity)) {
+			
 			this.foundEntities.add(entity);
 			return true;
+		
 		}
 
 		return true;

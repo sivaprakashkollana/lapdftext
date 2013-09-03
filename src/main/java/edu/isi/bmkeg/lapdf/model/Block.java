@@ -70,11 +70,15 @@ public interface Block extends Serializable {
     public static final String META_TYPE_HEADING=".heading";
     public static final String META_TYPE_SUBTITLE=".subtitle";
 	
+	public PageBlock getPage();
+
+	public void setPage(PageBlock page);
+    
     public Block getContainer();
 
 	public void setContainer(Block block);
 
-	public String readLeftRightMedLine();
+	public String readLeftRightMidLine();
 
 	public boolean isFlush(String condition, int value);
 

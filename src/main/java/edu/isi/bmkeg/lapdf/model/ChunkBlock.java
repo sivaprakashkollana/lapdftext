@@ -1,5 +1,7 @@
 package edu.isi.bmkeg.lapdf.model;
 
+import java.util.List;
+
 import edu.isi.bmkeg.lapdf.model.spatial.SpatialEntity;
 
 public interface ChunkBlock extends Block, SpatialEntity {
@@ -25,7 +27,7 @@ public interface ChunkBlock extends Block, SpatialEntity {
 	public String readChunkText();
 
 	public Boolean isHeaderOrFooter();
-
+	
 	public void setHeaderOrFooter(boolean headerOrFooter);
 
 	public ChunkBlock readLastChunkBlock();
@@ -35,5 +37,12 @@ public interface ChunkBlock extends Block, SpatialEntity {
 	boolean isUnderOneLineFlushNeighboursOfType(String type);
 
 	boolean hasNeighboursOfType(String type, int nsew);
-	
+
+	List<WordBlock> getRotatedWords();
+
+	void setRotatedWords(List<WordBlock> rotatedWords);
+
+	public double readDensity();
+
+
 }

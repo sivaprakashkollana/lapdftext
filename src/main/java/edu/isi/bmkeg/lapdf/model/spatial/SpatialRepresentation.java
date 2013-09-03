@@ -14,6 +14,8 @@ public interface SpatialRepresentation extends Serializable {
 
 	public List<SpatialEntity> intersects(SpatialEntity entity, String ordering);
 
+	public SpatialEntity nearest(int x, int y, int maxDistance);
+
 	public int addAll(List<SpatialEntity> list, int startId);
 
 	public List<ChunkBlock> getAllChunkBlocks(String ordering);
@@ -38,12 +40,10 @@ public interface SpatialRepresentation extends Serializable {
 
 	public int getMostPopularWordHeightPage();
 
-	public int getMostPopularHorizontalSpaceBetweenWordsPage()
-			throws InvalidPopularSpaceValueException;
+	public int getMostPopularHorizontalSpaceBetweenWordsPage();
 
 	public int getMostPopularWordWidthPage();
 
-	public int getMostPopularVerticalSpaceBetweenWordsPage()
-			throws InvalidPopularSpaceValueException;
+	public int getMostPopularVerticalSpaceBetweenWordsPage();
 
 }

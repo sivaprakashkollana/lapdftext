@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -23,8 +25,10 @@ import edu.isi.bmkeg.lapdf.model.Block;
 import edu.isi.bmkeg.lapdf.model.ChunkBlock;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
 import edu.isi.bmkeg.lapdf.model.PageBlock;
+import edu.isi.bmkeg.lapdf.model.WordBlock;
 import edu.isi.bmkeg.lapdf.model.RTree.RTModelFactory;
 import edu.isi.bmkeg.lapdf.model.ordering.SpatialOrdering;
+import edu.isi.bmkeg.lapdf.model.spatial.SpatialEntity;
 import edu.isi.bmkeg.lapdf.parser.RuleBasedParser;
 import edu.isi.bmkeg.lapdf.text.SectionsTextWriter;
 import edu.isi.bmkeg.lapdf.text.SpatialLayoutFeaturesReportGenerator;
@@ -34,6 +38,11 @@ import edu.isi.bmkeg.lapdf.utils.JPedalPDFRenderer;
 import edu.isi.bmkeg.lapdf.utils.PageImageOutlineRenderer;
 import edu.isi.bmkeg.lapdf.xml.OpenAccessXMLWriter;
 import edu.isi.bmkeg.lapdf.xml.SpatialXMLWriter;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLChunk;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLPage;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLRectangle;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLWord;
 import edu.isi.bmkeg.utils.Converters;
 
 
@@ -69,8 +78,7 @@ public class LapdfEngine  {
 			throws Exception {
 
 		this.parser = new RuleBasedParser(new RTModelFactory());
-		File rf = Converters
-		.extractFileFromJarClasspath("rules/general.drl");
+		File rf = Converters.extractFileFromJarClasspath("rules/general.drl");
 		this.setRuleFile(rf);
 
 	}
@@ -285,8 +293,6 @@ public class LapdfEngine  {
 	// File Processing functions
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 	
 	/**
 	 * Extracts the blocks within file to generate a LapdfDocument Object
@@ -474,10 +480,9 @@ public class LapdfEngine  {
 	
 	
 	
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	// Output functions
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+	
+	
 	/**
 	 * Write out the blocked LapdfDocument object to XML
 	 * @param doc

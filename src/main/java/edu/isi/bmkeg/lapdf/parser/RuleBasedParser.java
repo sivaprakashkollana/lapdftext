@@ -4,11 +4,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.math3.stat.clustering.Cluster;
+import org.apache.commons.math3.stat.clustering.KMeansPlusPlusClusterer;
 import org.apache.log4j.Logger;
 
 import edu.isi.bmkeg.lapdf.extraction.JPedalExtractor;
@@ -34,7 +37,7 @@ public class RuleBasedParser implements Parser {
 
 	private ArrayList<PageBlock> pageList;
 	
-	private JPedalExtractor extractor;
+	private JPedalExtractor pageExtractor;
 	
 	private int idGenerator;
 	
@@ -74,7 +77,7 @@ public class RuleBasedParser implements Parser {
 			throws Exception {
 
 		pageList = new ArrayList<PageBlock>();
-		extractor = new JPedalExtractor(modelFactory);
+		pageExtractor = new JPedalExtractor(modelFactory);
 
 		idGenerator = 1;
 		this.avgHeightFrequencyCounter = new IntegerFrequencyCounter(1);
@@ -100,36 +103,44 @@ public class RuleBasedParser implements Parser {
 		document = new LapdfDocument(file);
 		document.setjPedalDecodeFailed(true);
 
-		while (extractor.hasNext()) {
+		String pth = file.getPath();
+		pth = pth.substring(0, pth.lastIndexOf(".pdf"));
+		File imgDir = new File(pth);
+		if (isDebugImages()) {
+			imgDir.mkdir();
+		}
+		
+		//
+		// Calling 'hasNext()' get the text from JPedal.
+		// 
+		while (pageExtractor.hasNext()) {
 			
 			document.setjPedalDecodeFailed(false);
 			
 			pageBlock = modelFactory.createPageBlock(
 					pageCounter++,
-					extractor.getCurrentPageBoxWidth(),
-					extractor.getCurrentPageBoxHeight(), 
+					pageExtractor.getCurrentPageBoxWidth(),
+					pageExtractor.getCurrentPageBoxHeight(), 
 					document);
 			
 			pageList.add(pageBlock);
 			
-			pageWordBlockList = extractor.next();
+			pageWordBlockList = pageExtractor.next();
 
 			idGenerator = pageBlock.initialize(pageWordBlockList, idGenerator);
 
-			this.eastWestSpacing = pageBlock.getMostPopularWordHeightPage()
+			this.eastWestSpacing = (pageBlock.getMostPopularWordHeightPage()) / 2
 					+ pageBlock.getMostPopularHorizontalSpaceBetweenWordsPage();
-			
-			logger.debug(this.eastWestSpacing);
-			
-			this.northSouthSpacing = pageBlock.getMostPopularWordHeightPage()
+						
+			this.northSouthSpacing = (pageBlock.getMostPopularWordHeightPage() ) / 2
 					+ pageBlock.getMostPopularVerticalSpaceBetweenWordsPage();
 
 			buildChunkBlocks(pageWordBlockList, pageBlock);
-
+			
 			if (isDebugImages()) {
 				PageImageOutlineRenderer.dumpPageImageToFile(
 						pageBlock,
-						file,
+						new File(pth + "/_01_afterBuildBlocks" + pageBlock.getPageNumber() + ".png"),
 						file.getName() + "afterBuildBlocks"
 								+ pageBlock.getPageNumber() + ".png", 0);
 			}
@@ -148,12 +159,12 @@ public class RuleBasedParser implements Parser {
 				s = m.group(1);
 			}
 
-			for (PageBlock page : pageList) {
-
+			/*for (PageBlock page : pageList) {
+				
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
-							file.getName()
-									+ "beforeBuildBlocksOverlapDeletion_"
+					PageImageOutlineRenderer.dumpPageImageToFile(page, 
+							new File(pth + "/_02_beforeBuildBlocksOverlapDeletion_" + page.getPageNumber() + ".png"),
+							file.getName() + "beforeBuildBlocksOverlapDeletion_"
 									+ s + "_" + page.getPageNumber()
 									+ ".png", 0);
 				}
@@ -161,7 +172,8 @@ public class RuleBasedParser implements Parser {
 				this.deleteHighlyOverlappedChunkBlocks(page);
 
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, 
+							new File(pth + "/_03_afterBuildBlocksOverlapDeletion_" + page.getPageNumber() + ".png"),
 							file.getName() + "afterBuildBlocksOverlapDeletion_"
 									+ s + "_" + page.getPageNumber()
 									+ ".png", 0);
@@ -171,7 +183,8 @@ public class RuleBasedParser implements Parser {
 
 				if (isDebugImages()) {
 
-					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, 
+							new File(pth + "/_04_afterVerticalDivide_" + page.getPageNumber() + ".png"),
 							file.getName() + "afterVerticalDivide_" + s
 									+ "_" + page.getPageNumber() + ".png", 0);
 				}
@@ -179,7 +192,8 @@ public class RuleBasedParser implements Parser {
 				this.joinLines(page);
 
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, 
+							new File(pth + "/_05_afterJoinLines_" + page.getPageNumber() + ".png"),
 							file.getName() + "afterJoinLines_" + s + "_"
 									+ page.getPageNumber() + ".png", 0);
 				}
@@ -187,7 +201,8 @@ public class RuleBasedParser implements Parser {
 				this.divideBlocksHorizontally(page);
 
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, 
+							new File(pth + "/_06_afterHorizontalDivide_" + page.getPageNumber() + ".png"),
 							file.getName() + "afterHorizontalDivide_" + s
 									+ "_" + page.getPageNumber() + ".png", 0);
 				}
@@ -195,12 +210,13 @@ public class RuleBasedParser implements Parser {
 				this.deleteHighlyOverlappedChunkBlocks(page);
 
 				if (isDebugImages()) {
-					PageImageOutlineRenderer.dumpPageImageToFile(page, file,
+					PageImageOutlineRenderer.dumpPageImageToFile(page, 
+							new File(pth + "/_07_afterOverlapDeletion_" + page.getPageNumber() + ".png"),
 							file.getName() + "/afterOverlapDeletion_" + s
 									+ "_" + page.getPageNumber() + ".png", 0);
 				}
 
-			}
+			}*/
 
 			document.addPages(pageList);
 
@@ -214,7 +230,7 @@ public class RuleBasedParser implements Parser {
 
 	private void init(File file) throws Exception {
 
-		extractor.init(file);
+		pageExtractor.init(file);
 		idGenerator = 1;
 		
 		this.avgHeightFrequencyCounter.reset();
@@ -222,88 +238,112 @@ public class RuleBasedParser implements Parser {
 
 		pageList.clear();
 
-	}
+	}	
 	
-	private void buildChunkBlocks(List<WordBlock> pageWordBlockList,
-			PageBlock pageBlock) {
+	private void buildChunkBlocks(List<WordBlock> wordBlocksLeftInPage,
+			PageBlock page) {
 
-		ChunkBlock chunkBlock = null;
-
-		LinkedBlockingQueue<WordBlock> wordBlockList = new LinkedBlockingQueue<WordBlock>();
-		ArrayList<WordBlock> seenList = new ArrayList<WordBlock>();
-		List tempList;
+		LinkedBlockingQueue<WordBlock> wordBlocksLeftToCheckInChunk = 
+				new LinkedBlockingQueue<WordBlock>();
+		
+		List<WordBlock> chunkWords = new ArrayList<WordBlock>();
+		List<WordBlock> rotatedWords = new ArrayList<WordBlock>();
 		int counter;
-		ArrayList<ChunkBlock> chunkBlockList = new ArrayList<ChunkBlock>();
+		List<ChunkBlock> chunkBlockList1 = new ArrayList<ChunkBlock>();
 
-		while (pageWordBlockList.size() > 0) {
-			wordBlockList.clear();
-			wordBlockList.add(pageWordBlockList.get(0));
+		while (wordBlocksLeftInPage.size() > 0) {
+			
+			wordBlocksLeftToCheckInChunk.clear();
+			
+			// Start off with this word block
+			wordBlocksLeftToCheckInChunk.add(wordBlocksLeftInPage.get(0));
 
 			counter = 0;
 			int extra;
-			seenList.clear();
-
-			while (wordBlockList.size() != 0) {
-
-				WordBlock wordBlock = wordBlockList.peek();
-
-				pageBlock.getDocument().getAvgHeightFrequencyCounter().add(
-						wordBlock.getHeight()
-						);
-				pageBlock.getDocument().getFontFrequencyCounter().add(
-						wordBlock.getFont() + ";" + wordBlock.getFontStyle() 
-						);
+			
+			// Here are all the words we've come across in this run 
+			chunkWords.clear();
+			int chunkTextHeight = -1;
+			
+			// Build a single Chunk here based on overlapping words
+			// keep going while there are still words to work through
+			while (wordBlocksLeftToCheckInChunk.size() != 0) {
 				
-				pageWordBlockList.remove(wordBlock);
-				tempList = this.getOverlappingNeighbors(pageBlock, wordBlock,
-						pageWordBlockList);
+				//
+				// get the top of the stack of words in the queue,
+				// note that we have not yet looked at this word
+				//
+				// look at the top word in the queue
+				WordBlock word = wordBlocksLeftToCheckInChunk.peek();
+				
+				if( chunkTextHeight == -1 ) {
+					chunkTextHeight = word.getHeight();
+				}
+				
+				// add this word's height and font to the counts.
+				page.getDocument().getAvgHeightFrequencyCounter().add(
+						word.getHeight());
+				page.getDocument().getFontFrequencyCounter().add(
+						word.getFont() + ";" + word.getFontStyle() );
+				
+				// remove this word from the global search
+				wordBlocksLeftInPage.remove(word);
 
-				tempList.removeAll(wordBlockList);
-				tempList.removeAll(seenList);
-				wordBlockList.addAll(tempList);
+				// what other words on the page are close to this word 
+				// and are still in the block?				
+				List<WordBlock> wordsToAddThisIteration = word.readNearbyWords(
+						this.eastWestSpacing, this.northSouthSpacing);				
+					
+				// TODO how to add more precise word features without
+				word.writeFlushArray(wordsToAddThisIteration);
+				
+				wordsToAddThisIteration.retainAll(wordBlocksLeftInPage);
+				
+				// remove the words we've already looked at
+				wordsToAddThisIteration.removeAll(wordBlocksLeftToCheckInChunk);
+				
+				// or they've already been seen
+				wordsToAddThisIteration.removeAll(chunkWords);
+				
+				//
+				// TODO Add criteria here to improve blocking by 
+				// dropping newly found words that should be excluded.
+				//
+				//List<WordBlock> wordsToKill = new ArrayList<WordBlock>();
+				/*for( WordBlock w : wordsToAddThisIteration) {
 
-				seenList.add(wordBlockList.poll());
+					// or they are a different height from the height 
+					// of the first word in this chunk +/- 1px.
+					if( w.getHeight() > chunkTextHeight + 1 ||
+							w.getHeight() < chunkTextHeight - 1 ) {
+					//	wordsToKill.add(w);
+					}
+
+					// or does adding this word to the chunk to the existing rectangle 
+					// significantly causes the word density to drop beyond that of 
+					// adding a new row (or column) to the block? 
+
+				}
+				wordsToAddThisIteration.removeAll(wordsToKill);*/
+				
+				// At this point, these words will be added to this chunk.
+				wordBlocksLeftToCheckInChunk.addAll(wordsToAddThisIteration);
+
+				// get this word from the queue and add it.
+				WordBlock wb = wordBlocksLeftToCheckInChunk.poll();
+				chunkWords.add(wb);					
+				wb.setOrderAddedToChunk(chunkWords.size());
 			}
 
-			pageWordBlockList.removeAll(seenList);
-
-			chunkBlock = buildChunkBlock(seenList, pageBlock);
-
-			chunkBlockList.add(chunkBlock);
-
+			wordBlocksLeftInPage.removeAll(chunkWords);
+			
+			ChunkBlock cb1 = buildChunkBlock(chunkWords, page);
+			chunkBlockList1.add(cb1);
+			
 		}
 
-		idGenerator = pageBlock.addAll(new ArrayList<SpatialEntity>(
-				chunkBlockList), idGenerator);
-
-	}
-
-	private List<WordBlock> getOverlappingNeighbors(
-			PageBlock pageBlock,
-			WordBlock wordBlock, 
-			List<WordBlock> pageWordList) {
-
-		// expand the current word.
-		int topX = wordBlock.getX1() - this.eastWestSpacing;
-		int topY = wordBlock.getY1() - this.northSouthSpacing;
-		int bottomX = wordBlock.getX2() + this.eastWestSpacing;
-		int bottomY = wordBlock.getY2() + this.northSouthSpacing;
-
-		SpatialEntity expandedWord = modelFactory.createWordBlock(
-				topX, topY, bottomX, bottomY, 
-				0, null, null, null);
-		
-		// find all overlapping words
-		TreeSet listOfInteresectingBlock = new TreeSet<SpatialEntity>(
-				new SpatialOrdering(SpatialOrdering.MIXED_MODE)
-				);
-		listOfInteresectingBlock.addAll(pageBlock.intersects(expandedWord, null));
-		listOfInteresectingBlock.retainAll(pageWordList);
-
-		List<WordBlock> overlappingNeighbors = 
-				new ArrayList<WordBlock>(listOfInteresectingBlock);
-		
-		return overlappingNeighbors;
+		idGenerator = page.addAll(new ArrayList<SpatialEntity>(
+				chunkBlockList1), idGenerator);
 
 	}
 
@@ -318,18 +358,23 @@ public class RuleBasedParser implements Parser {
 		chunkBlockList = new ArrayList<ChunkBlock>(page.getAllChunkBlocks(null));
 
 		for (ChunkBlock chunky : chunkBlockList) {
-			leftRightMidline = chunky.readLeftRightMedLine();
-			leftFlush = chunky.isFlush(chunky.LEFT,
+			
+			leftRightMidline = chunky.readLeftRightMidLine();
+			leftFlush = chunky.isFlush(ChunkBlock.LEFT,
 					chunky.getMostPopularWordHeight() * 2);
-			rightFlush = chunky.isFlush(chunky.RIGHT,
+			
+			rightFlush = chunky.isFlush(ChunkBlock.RIGHT,
 					chunky.getMostPopularWordHeight() * 2);
+			
 			int deltaH = chunky.getMostPopularWordHeight()
 					- page.getDocument().readMostPopularWordHeight();
-			if (chunky.MIDLINE.equalsIgnoreCase(leftRightMidline)
+			
+			if (ChunkBlock.MIDLINE.equalsIgnoreCase(leftRightMidline)
 					&& (leftFlush || rightFlush) && deltaH < 3) {
 				if (verticalSplitCandidate(chunky))
 					this.splitBlockDownTheMiddle(chunky);
 			}
+		
 		}
 
 	}
@@ -339,55 +384,56 @@ public class RuleBasedParser implements Parser {
 
 		// 0:x,1:width
 		ArrayList<Integer[]> spaceList = new ArrayList<Integer[]>();
-		int previousX = 0;
+		int prevX = 0;
 
-		int previousWidth = 0;
-		int currentX = 0;
-		int currentY = 0;
-		int currentWidth = 0;
-		Integer[] currentSpace = new Integer[] { -100, -100 };
-		Integer[] currentWidestSpace = new Integer[] { -100, -100 };
+		int prevW = 0;
+		int currX = 0;
+		int currY = 0;
+		int currW = 0;
+		Integer[] currSpace = new Integer[] { -100, -100 };
+		Integer[] currWidest = new Integer[] { -100, -100 };
 
 		PageBlock parent = (PageBlock) block.getContainer();
 		List<SpatialEntity> wordBlockList = parent.containsByType(block,
 				SpatialOrdering.MIXED_MODE, WordBlock.class);
+		
 		int pageWidth = parent.getMargin()[2] - parent.getMargin()[0];
 		int marginHeight = parent.getMargin()[3] - parent.getMargin()[1];
 		int averageWidth = 0;
 		float spaceWidthToPageWidth = 0;
 
 		for (int i = 0; i < wordBlockList.size(); i++) {
-			WordBlock wordBlock = (WordBlock) wordBlockList.get(i);
+			WordBlock wb = (WordBlock) wordBlockList.get(i);
 
 			// New line started
-			if (i == 0
-					|| Math.abs(((double) (wordBlock.getY1() - currentY) / (double) marginHeight)) > 0.01) {
+			if (i == 0 || 
+					Math.abs(((double) (wb.getY1() - currY) / (double) marginHeight)) > 0.01) {
 
-				currentY = wordBlock.getY1();
-				currentX = wordBlock.getX1();
-				currentWidth = wordBlock.getWidth();
-				if (currentWidestSpace[1] > 0) {
-					spaceList.add(new Integer[] { currentWidestSpace[0],
-							currentWidestSpace[1] });
+				currY = wb.getY1();
+				currX = wb.getX1();
+				currW = wb.getWidth();
+				if (currWidest[1] > 0) {
+					spaceList.add(new Integer[] { currWidest[0],
+							currWidest[1] });
 				}
-				currentWidestSpace[0] = -100;
-				currentWidestSpace[1] = -100;
+				currWidest[0] = -100;
+				currWidest[1] = -100;
 				continue;
 			}
 
 			// Continuing current line
-			previousX = currentX;
-			previousWidth = currentWidth;
-			currentY = wordBlock.getY1();
-			currentX = wordBlock.getX1();
-			currentWidth = wordBlock.getWidth();
-			currentSpace[1] = currentX - (previousX + previousWidth);
-			currentSpace[0] = currentX + currentWidth;
+			prevX = currX;
+			prevW = currW;
+			currY = wb.getY1();
+			currX = wb.getX1();
+			currW = wb.getWidth();
+			currSpace[1] = currX - (prevX + prevW);
+			currSpace[0] = currX + currW;
 
-			if (currentWidestSpace[1] == -100
-					|| currentSpace[1] > currentWidestSpace[1]) {
-				currentWidestSpace[0] = currentSpace[0];
-				currentWidestSpace[1] = currentSpace[1];
+			if (currWidest[1] == -100
+					|| currSpace[1] > currWidest[1]) {
+				currWidest[0] = currSpace[0];
+				currWidest[1] = currSpace[1];
 			}
 		}
 
@@ -408,8 +454,7 @@ public class RuleBasedParser implements Parser {
 		/*
 		 * if (spaceWidthToPageWidth > 0.015) return true; else return false;
 		 */
-		if (averageWidth > parent
-				.getMostPopularHorizontalSpaceBetweenWordsPage())
+		if (averageWidth > parent.getMostPopularHorizontalSpaceBetweenWordsPage())
 			return true;
 		else
 			return false;
@@ -426,7 +471,7 @@ public class RuleBasedParser implements Parser {
 		String wordBlockLeftRightMidLine;
 		for (int i = 0; i < wordBlockList.size(); i++) {
 			WordBlock wordBlock = (WordBlock) wordBlockList.get(i);
-			wordBlockLeftRightMidLine = wordBlock.readLeftRightMedLine();
+			wordBlockLeftRightMidLine = wordBlock.readLeftRightMidLine();
 
 			if (wordBlockLeftRightMidLine.equals(Block.LEFT))
 				leftBlocks.add(wordBlock);
@@ -537,7 +582,7 @@ public class RuleBasedParser implements Parser {
 				);
 		
 		chunkBlock.setContainer(pageBlock);
-		
+				
 		return chunkBlock;
 
 	}
@@ -684,9 +729,9 @@ public class RuleBasedParser implements Parser {
 
 		int y;
 		int breakIndex;
-		ArrayList<ArrayList<WordBlock>> bigBlockList = new ArrayList<ArrayList<WordBlock>>();
+		List<List<WordBlock>> bigBlockList = new ArrayList<List<WordBlock>>();
 		for (int j = 0; j < breaks.size() + 1; j++) {
-			ArrayList<WordBlock> littleBlockList = new ArrayList<WordBlock>();
+			List<WordBlock> littleBlockList = new ArrayList<WordBlock>();
 			bigBlockList.add(littleBlockList);
 		}
 
@@ -705,7 +750,7 @@ public class RuleBasedParser implements Parser {
 		ChunkBlock chunky;
 		TreeSet<ChunkBlock> chunkBlockList = new TreeSet<ChunkBlock>(
 				new SpatialOrdering(SpatialOrdering.MIXED_MODE));
-		for (ArrayList<WordBlock> list : bigBlockList) {
+		for (List<WordBlock> list : bigBlockList) {
 			if (list.size() == 0)
 				continue;
 			chunky = this.buildChunkBlock(list, parent);
@@ -743,6 +788,7 @@ public class RuleBasedParser implements Parser {
 					chunkBlockList.poll();
 					continue;
 				}
+				
 				for (SpatialEntity entity : neighbouringChunkBlockList) {
 					neighbouringChunkBlock = (ChunkBlock) entity;
 					if (neighbouringChunkBlock.equals(chunky))
@@ -790,7 +836,7 @@ public class RuleBasedParser implements Parser {
 		int x1 = 0, x2 = 0, y1 = 0, y2 = 0;
 		int width = parent.getMargin()[2] - parent.getMargin()[0];
 		int height = parent.getMargin()[3] - parent.getMargin()[1];
-		String lrm = chunk.readLeftRightMedLine();
+		String lrm = chunk.readLeftRightMidLine();
 
 		width = (int) (width * 0.25);
 		y1 = chunk.getY1();
@@ -826,30 +872,26 @@ public class RuleBasedParser implements Parser {
 		return entity;
 
 	}
-
+	
 	private void deleteHighlyOverlappedChunkBlocks(PageBlock page) {
 		
 		List<ChunkBlock> chunkBlockList = page.getAllChunkBlocks(
-				SpatialOrdering.MIXED_MODE
-				);
+				SpatialOrdering.MIXED_MODE);
 		
-		ChunkBlock chunky;
-		ChunkBlock neighbourChunk;
-		List<SpatialEntity> neighbouringChunkBlockList;
 		List<SpatialEntity> wordList;
 		SpatialEntity intersectingRectangle;
 		double property1, property2;
 
 		for (SpatialEntity entity : chunkBlockList) {
 
-			chunky = (ChunkBlock) entity;
+			ChunkBlock chunky = (ChunkBlock) entity;
 
-			neighbouringChunkBlockList = page.intersectsByType(chunky,
+			List<SpatialEntity> neighbouringChunkBlockList = page.intersectsByType(chunky,
 					SpatialOrdering.MIXED_MODE, ChunkBlock.class);
 
 			for (SpatialEntity neighbourEntity : neighbouringChunkBlockList) {
 
-				neighbourChunk = (ChunkBlock) neighbourEntity;
+				ChunkBlock neighbourChunk = (ChunkBlock) neighbourEntity;
 
 				intersectingRectangle = chunky
 						.getIntersectingRectangle(neighbourChunk);

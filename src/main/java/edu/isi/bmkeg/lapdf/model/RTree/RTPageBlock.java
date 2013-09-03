@@ -59,7 +59,7 @@ public class RTPageBlock extends RTSpatialRepresentation implements PageBlock {
 	}
 
 	@Override
-	public String readLeftRightMedLine() {
+	public String readLeftRightMidLine() {
 		return null;
 	}
 
@@ -106,12 +106,22 @@ public class RTPageBlock extends RTSpatialRepresentation implements PageBlock {
 	public int initialize(List<WordBlock> list, int startId) {
 
 		for(WordBlock block:list){
-			block.setContainer(this);
+			block.setPage(this);
 			super.add(block, startId++);
 		}
 		
 		return startId;
 	
+	}
+
+	@Override
+	public PageBlock getPage() {
+		return this;
+	}
+
+	@Override
+	public void setPage(PageBlock page) { 
+		// Do nothing
 	}	
 
 }

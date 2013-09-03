@@ -30,7 +30,8 @@ public class PageImageOutlineRenderer {
 	private static TreeMap<String, Integer> countMap = new TreeMap<String, Integer>();
 	private static final int TYPE_UNCLASSIFIED_COLOR_CODE = 0xFBF5EF;
 
-	public static void dumpPageImageToFile(PageBlock page, File outputFile, String label, int mode) throws IOException {
+	public static void dumpPageImageToFile(PageBlock page, File outputFile, String label, int mode) 
+			throws IOException {
 
 		BufferedImage image = PageImageOutlineRenderer.createPageImage(page, label, mode);
 		
@@ -38,7 +39,8 @@ public class PageImageOutlineRenderer {
 
 	}
 
-	public static BufferedImage createPageImage(PageBlock page, String label, int mode) throws IOException {
+	public static BufferedImage createPageImage(PageBlock page, String label, int mode) 
+			throws IOException {
 
 		int width = page.getPageBoxWidth();
 		int height = page.getPageBoxHeight();
@@ -64,9 +66,7 @@ public class PageImageOutlineRenderer {
 
 		return image;
 
-	}
-
-	
+	}	
 	
 	private static void renderBlockByColor(
 			List<Block> entityList,
@@ -105,40 +105,111 @@ public class PageImageOutlineRenderer {
 						chunky.getWidth(), chunky.getHeight(), image,
 						Color.red, chunky, mode);
 				
-				String text = chunky.getMostPopularWordFont() + ";" + chunky.getMostPopularWordStyle();
+				/*
+				String text = chunky.getMostPopularWordFont() + ";" 
+						+ chunky.getMostPopularWordStyle();
 				if( mode != LapdfMode.BLOCK_ONLY )
 					text = chunky.getType();
+				*/
 				
 				drawWord( chunky.getX1() - 20, 
 						chunky.getY1() , 
 						image, 
 						Color.black,
-						text, 12);
+						String.format("%4f", chunky.readDensity()), 
+						12);
 				
 			} else if (block != null) {
-
-				WordBlock wordBlock = (WordBlock) block;
-				ChunkBlock chunky = (ChunkBlock) wordBlock.getContainer();
-
+				
+				WordBlock w = (WordBlock) block;
+				ChunkBlock chunky = (ChunkBlock) w.getContainer();
+				PageBlock page = w.getPage();
+								
+				int hSpace = 3;
+				int vSpace = 3;
+				try {
+					hSpace = page.getMostPopularWordHeightPage() / 2 + 
+							page.getMostPopularHorizontalSpaceBetweenWordsPage();
+					vSpace = page.getMostPopularWordHeightPage() / 2 + 
+							page.getMostPopularVerticalSpaceBetweenWordsPage();
+				} catch(Exception e) {
+					e.printStackTrace();
+				}
+				
 				Integer colorCode = (mode == 1) ? colorDecider(chunky.getType())
 						: 0x000000;
 
-				drawRectangle(wordBlock.getX1() + 2, wordBlock.getY1() + 2,
-						wordBlock.getWidth() - 4, wordBlock.getHeight() - 4,
+				drawRectangle(w.getX1(), w.getY1(),
+						w.getWidth(), w.getHeight(),
 						image, new Color(colorCode), block, mode);
 
-
-				if( wordBlock.getFontStyle() != null) {
+				if( w.getFontStyle() != null) {
 				
-					String text = wordBlock.getFontStyle();
+					String text = w.getFontStyle();
 				
 					text = text.substring(10, text.length()-2);
 
-					drawWord( wordBlock.getX1(), 
-							wordBlock.getY1() + wordBlock.getHeight(), 
+					int centroidX = Math.round( (w.getX1() + w.getX2()) / 2);
+					int centroidY = Math.round( (w.getY1() + w.getY2()) / 2);
+					/*int[] wLocalDistances = w.getLocalDistances();
+					int dNorth = wLocalDistances[0];
+					int dSouth = wLocalDistances[1];
+					int dEast = wLocalDistances[2];
+					int dWest = wLocalDistances[3];
+					
+					if( dNorth == 1000 )
+						drawLine( centroidX, w.getY2(), 
+								centroidX, w.getY2() + vSpace,
+								1, image, Color.cyan);
+				
+					if( dSouth == 1000 )
+						drawLine( centroidX, w.getY1(), 
+								centroidX, w.getY1() - vSpace,
+								1, image, Color.cyan);
+
+					if( dEast == 1000 )
+						drawLine( w.getX2(), centroidY, 
+								w.getX2() + hSpace, centroidY, 
+								1, image, Color.cyan);
+
+					if( dWest == 1000 )
+						drawLine( w.getX1(), centroidY, 
+								w.getX1() - hSpace, centroidY, 
+								1, image, Color.cyan);*/
+
+					
+					WordBlock[] wFlushArray = w.getFlushArray();
+					WordBlock lu = wFlushArray[0];
+					WordBlock ru = wFlushArray[1];
+					WordBlock ld = wFlushArray[2];
+					WordBlock rd = wFlushArray[3];
+					
+					if( lu != null )
+						drawLine( w.getX1(), centroidY, 
+								w.getX1(), w.getY1(),
+								1, image, Color.green);
+				
+					if( ru != null )
+						drawLine( w.getX2(), centroidY, 
+								w.getX2(), w.getY1(),
+								1, image, Color.green);
+
+					if( ld != null )
+						drawLine( w.getX1(), centroidY, 
+								w.getX1(), w.getY2(),
+								1, image, Color.green);
+
+					if( rd != null)
+						drawLine( w.getX2(), centroidY, 
+								w.getX2(), w.getY2(),
+								1, image, Color.green);
+
+					drawWord( centroidX, 
+							centroidY + 4, 
 							image, 
-							Color.black,
-							text, 6);
+							Color.red,
+							String.format("%d", w.getOrderAddedToChunk()), 
+							8);
 				}
 
 			}
@@ -244,6 +315,7 @@ public class PageImageOutlineRenderer {
 
 	private static void drawWord(int x, int y, int width, int height,
 			BufferedImage image, Color color, WordBlock word) {
+		
 		Graphics2D graphics = image.createGraphics();
 		Font plainFont = new Font(word.getFont(), Font.PLAIN, word.getHeight());
 
@@ -252,6 +324,19 @@ public class PageImageOutlineRenderer {
 
 		graphics.setPaint(color);
 		graphics.drawString(as.getIterator(), x, y);
+
+	}
+	
+	private static void drawLine(
+			int x1, int y1, 
+			int x2, int y2, 
+			int weight,
+			BufferedImage image,
+			Color color) {
+		
+		Graphics2D graphics = image.createGraphics();
+		graphics.setPaint(color);
+		graphics.drawLine(x1, y1, x2, y2);
 
 	}
 
@@ -275,7 +360,8 @@ public class PageImageOutlineRenderer {
 
 		if (colorMap.size() == 0 || countMap.size() == 0) {
 			throw new IllegalStateException(
-					"Before calling this method you should use createPageImage to draw the individual pages");
+					"Before calling this method you should use createPageImage " +
+					"to draw the individual pages");
 		}
 
 		BufferedImage image = new BufferedImage(500, 800,

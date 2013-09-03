@@ -11,6 +11,11 @@ import edu.isi.bmkeg.lapdf.model.RTree.RTPageBlock;
 import edu.isi.bmkeg.lapdf.model.RTree.RTSpatialEntity;
 import edu.isi.bmkeg.lapdf.model.ordering.SpatialOrdering;
 import edu.isi.bmkeg.lapdf.model.spatial.SpatialEntity;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLChunk;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLPage;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLRectangle;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLWord;
 import edu.isi.bmkeg.utils.FrequencyCounter;
 import edu.isi.bmkeg.utils.IntegerFrequencyCounter;
 
@@ -100,7 +105,7 @@ public class LapdfDocument implements Serializable {
 		return nextMostPopularFontStyle;
 	}
 
-	public void setNextMostPopularFontStyle(String nextMostPopularFontStyle) {
+	public void setNextMostPopularFontStyle(String nextMostPopzularFontStyle) {
 		this.nextMostPopularFontStyle = nextMostPopularFontStyle;
 	}
 
@@ -113,6 +118,14 @@ public class LapdfDocument implements Serializable {
 		this.mostPopularFontStyleOnLastPage = mostPopularFontStyleOnLastPage;
 	}
 
+	public int getMostPopularWordHeight() {
+		return mostPopularWordHeight;
+	}
+
+	public void setMostPopularWordHeight(int mostPopularWordHeight) {
+		this.mostPopularWordHeight = mostPopularWordHeight;
+	}
+	
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	public void addPages(List<PageBlock> pageList) {
@@ -318,7 +331,100 @@ public class LapdfDocument implements Serializable {
 		
 		return this.getMostPopularFontStyleOnLastPage();
 				
-	}
+	}	
 	
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Output functions
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+	/**
+	 * Convert the LapdfDocument to XML Objects
+	 * @param doc
+	 * @param out
+	 */
+	public LapdftextXMLDocument convertToLapdftextXmlFormat() throws Exception {
+		
+		LapdftextXMLDocument xmlDoc = new LapdftextXMLDocument();
+		
+		int nPages = this.getTotalNumberOfPages();
+		int id = 0;
+		for( int i=0; i<nPages; i++ ) {
+			PageBlock page = this.getPage(i+1);
+			
+			LapdftextXMLPage xmlPage = new LapdftextXMLPage();
+			xmlDoc.getPages().add(xmlPage);
+			
+			xmlPage.setId( id++ );
+			xmlPage.setH( page.getPageBoxHeight() );
+			xmlPage.setW( page.getPageBoxWidth() );
+
+			// int width = parent.getMargin()[2] - parent.getMargin()[0];
+			// int height = parent.getMargin()[3] - parent.getMargin()[1];
+			int[] m = page.getMargin();
+			LapdftextXMLRectangle r = new LapdftextXMLRectangle(id++, m[2]-m[0], m[3]-m[1], m[0], m[1]);
+			xmlPage.setMargin( r );
+			
+			xmlPage.setMostPopWordHeight( 
+					page.getMostPopularWordHeightPage() 
+					);
+			xmlPage.setPageNumber( i+1 );
+			
+			Iterator<ChunkBlock> cIt = page.getAllChunkBlocks(
+					SpatialOrdering.MIXED_MODE
+					).iterator();
+			
+			while( cIt.hasNext() ) {
+				ChunkBlock chunk = cIt.next();
+				
+				LapdftextXMLChunk xmlChunk = new LapdftextXMLChunk();
+				xmlPage.getChunks().add(xmlChunk);
+				
+				if( chunk.getType() != null )
+					xmlChunk.setType( chunk.getType() );
+				
+				xmlChunk.setFont( chunk.getMostPopularWordFont() );
+				xmlChunk.setFont( chunk.getMostPopularWordFont() );
+				xmlChunk.setFontSize( chunk.getMostPopularWordHeight() );
+			
+				xmlChunk.setId( id++ );
+				xmlChunk.setW( chunk.getX2() - chunk.getX1() );
+				xmlChunk.setH( chunk.getY2() - chunk.getY1() );
+				xmlChunk.setX( chunk.getX1() );
+				xmlChunk.setY( chunk.getY1() );
+				
+				List<SpatialEntity> wbList = page.containsByType(chunk,
+						SpatialOrdering.MIXED_MODE, 
+						WordBlock.class);
+				if( wbList != null ) {					
+					Iterator<SpatialEntity> wbIt = wbList.iterator();
+					while( wbIt.hasNext() ) {
+						WordBlock word = (WordBlock) wbIt.next();
+	
+						LapdftextXMLWord xmlWord = new LapdftextXMLWord();
+						xmlChunk.getWords().add( xmlWord ); 
+						
+						if( word.getWord() != null ) {
+							xmlWord.setT(word.getWord());							
+						} else {
+							continue;
+						}
+						
+						xmlWord.setId( id++ );
+						xmlWord.setW( word.getX2() - word.getX1() );
+						xmlWord.setH( word.getY2() - word.getY1() );
+						xmlWord.setX( word.getX1() );
+						xmlWord.setY( word.getY1() );
+											
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+		return xmlDoc;
+	
+	}
 	
 }
