@@ -663,7 +663,7 @@ public class LapdfEngine  {
 		 *  
 		 *  properties
 		 *  
-		 *  21. getMostPopularWordHeight
+		 *  18. getMostPopularWordHeight
 		 *  22. getMostPopularWordSpaceWidth
 		 *  23. getMostPopularWordFont
 		 *  24. getMostPopularWordStyle
