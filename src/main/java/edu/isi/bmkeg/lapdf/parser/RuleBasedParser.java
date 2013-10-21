@@ -138,11 +138,11 @@ public class RuleBasedParser implements Parser {
 			buildChunkBlocks(pageWordBlockList, pageBlock);
 			
 			if (isDebugImages()) {
-				PageImageOutlineRenderer.dumpPageImageToFile(
+				PageImageOutlineRenderer.dumpChunkTypePageImageToFile(
 						pageBlock,
 						new File(pth + "/_01_afterBuildBlocks" + pageBlock.getPageNumber() + ".png"),
 						file.getName() + "afterBuildBlocks"
-								+ pageBlock.getPageNumber() + ".png", 0);
+								+ pageBlock.getPageNumber() + ".png");
 			}
 
 		}

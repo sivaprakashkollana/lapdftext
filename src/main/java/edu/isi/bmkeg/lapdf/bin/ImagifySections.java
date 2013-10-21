@@ -107,7 +107,7 @@ public class ImagifySections {
 	
 					LapdfDocument lapdf = engine.blockifyPdfFile(pdf);
 					engine.classifyDocument(lapdf, ruleFile);
-					engine.dumpImageOutlinesToFiles(lapdf, outImgDir, pdfStem, LapdfMode.CLASSIFY);
+					engine.dumpChunkTypeImageOutlinesToFiles(lapdf, outImgDir, pdfStem);
 				
 				} catch (Exception e) {
 				
@@ -129,7 +129,7 @@ public class ImagifySections {
 			
 			LapdfDocument lapdf = engine.blockifyPdfFile(inputFileOrDir);
 			engine.classifyDocument(lapdf, ruleFile);
-			engine.dumpImageOutlinesToFiles(lapdf, outImgDir, pdfStem, LapdfMode.CLASSIFY);
+			engine.dumpChunkTypeImageOutlinesToFiles(lapdf, outImgDir, pdfStem);
 			
 		}
 	

@@ -24,22 +24,66 @@ import edu.isi.bmkeg.lapdf.model.PageBlock;
 import edu.isi.bmkeg.lapdf.model.WordBlock;
 import edu.isi.bmkeg.lapdf.model.ordering.SpatialOrdering;
 
+
+/**
+ * Usage of this system is based on drawing images of pages to help developers debug their rules file.
+ * 
+ * @author burns
+ */
 public class PageImageOutlineRenderer {
 	
 	private static TreeMap<Integer, String> colorMap = new TreeMap<Integer, String>();
 	private static TreeMap<String, Integer> countMap = new TreeMap<String, Integer>();
 	private static final int TYPE_UNCLASSIFIED_COLOR_CODE = 0xFBF5EF;
 
-	public static void dumpPageImageToFile(PageBlock page, File outputFile, String label, int mode) 
+	/** 
+	 * Draw an outline diagram for a page from a PDF file where each word is numbered based on the order the 
+	 * system adds the word to the chunk. Useful for debugging. 
+	 * @param page
+	 * @param outputFile
+	 * @param label
+	 * @throws IOException
+	 */
+	public static void dumpWordOrderPageImageToFile(PageBlock page, File outputFile, String label) 
 			throws IOException {
 
-		BufferedImage image = PageImageOutlineRenderer.createPageImage(page, label, mode);
+		BufferedImage image = PageImageOutlineRenderer.createPageImageForBlocksWordOrder(page, label);
+		
+		if( image == null )
+			return;
 		
 		ImageIO.write(image, "png", outputFile);
 
 	}
 
-	public static BufferedImage createPageImage(PageBlock page, String label, int mode) 
+	/**
+	 * Draw an outline diagram for a page with the types of all chunks labeled.
+	 * @param page
+	 * @param outputFile
+	 * @param label
+	 * @param mode
+	 * @throws IOException
+	 */
+	public static void dumpChunkTypePageImageToFile(PageBlock page, File outputFile, String label) 
+			throws IOException {
+
+		BufferedImage image = PageImageOutlineRenderer.createPageImageForChunkTypes(page, label);
+		
+		if( image == null )
+			return;
+		
+		ImageIO.write(image, "png", outputFile);
+
+	}
+
+	/**
+	 * Given a PageBlock, this returns a BufferedImage of all the words.
+	 * @param page
+	 * @param label
+	 * @return
+	 * @throws IOException
+	 */
+	public static BufferedImage createPageImageForBlocksWordOrder(PageBlock page, String label) 
 			throws IOException {
 
 		int width = page.getPageBoxWidth();
@@ -58,34 +102,60 @@ public class PageImageOutlineRenderer {
 		List<Block> list = new ArrayList<Block>(cbList);
 		
 		// renderBlockPerImage(list, image, fileName);
-		renderBlockByColor(list, image, mode);
+		renderBlocksByWordOrder(list, image);
 
 		List<WordBlock> wbList = page.getAllWordBlocks(SpatialOrdering.MIXED_MODE);
 		list = new ArrayList<Block>(wbList);
-		renderBlockByColor(list, image, mode);
+		renderBlocksByWordOrder(list, image);
+
+		return image;
+
+	}	
+
+	/**
+	 * Given a PageBlock, this returns a BufferedImage of all the words.
+	 * @param page
+	 * @param label
+	 * @return
+	 * @throws IOException
+	 */
+	public static BufferedImage createPageImageForChunkTypes(PageBlock page, String label) 
+			throws IOException {
+
+		int width = page.getPageBoxWidth();
+		int height = page.getPageBoxHeight();
+
+		BufferedImage image = new BufferedImage(width, height,
+				BufferedImage.TYPE_INT_ARGB);
+		image.getGraphics().setColor(Color.white);
+		image.getGraphics().fillRect(0, 0, width, height);
+		image.getGraphics().setColor(Color.red);
+
+		drawWord(width / 2 - 50, 10, image, Color.black,
+				label + ":" + page.getPageNumber(), 10);
+
+		List<ChunkBlock> cbList = page.getAllChunkBlocks(SpatialOrdering.MIXED_MODE);
+		List<Block> list = new ArrayList<Block>(cbList);
+		
+		renderChunksByType(list, image);
 
 		return image;
 
 	}	
 	
-	private static void renderBlockByColor(
-			List<Block> entityList,
-			BufferedImage image, int mode) {
+	private static void renderBlocksByWordOrder( List<Block> entityList,
+			BufferedImage image ) {
 
 		for (Block block : entityList) {
+			
+			// ~~~~~~~~~~~~~~~~
+			// Draw the chunks
+			// ~~~~~~~~~~~~~~~~
 			if (block instanceof ChunkBlock) {
 
-				ChunkBlock chunky = (ChunkBlock) block;
-				Integer colorCode = colorDecider(chunky.getType());
+				ChunkBlock chunk = (ChunkBlock) block;
 
-				if (colorMap.get(colorCode) == null) {
-					if (colorCode == TYPE_UNCLASSIFIED_COLOR_CODE)
-						colorMap.put(colorCode, Block.TYPE_UNCLASSIFIED);
-					else
-						colorMap.put(colorCode, chunky.getType());
-				}
-
-				if (colorCode == TYPE_UNCLASSIFIED_COLOR_CODE) {
+				if( chunk.getType() == Block.TYPE_UNCLASSIFIED ) {
 					if (countMap.get(Block.TYPE_UNCLASSIFIED) == null) {
 						countMap.put(Block.TYPE_UNCLASSIFIED, 1);
 					} else {
@@ -93,55 +163,32 @@ public class PageImageOutlineRenderer {
 								countMap.get(Block.TYPE_UNCLASSIFIED) + 1);
 					}
 				} else {
-					if (countMap.get(chunky.getType()) == null) {
-						countMap.put(chunky.getType(), 1);
+					if (countMap.get(chunk.getType()) == null) {
+						countMap.put(chunk.getType(), 1);
 					} else {
-						countMap.put(chunky.getType(),
-								countMap.get(chunky.getType()) + 1);
+						countMap.put(chunk.getType(),
+								countMap.get(chunk.getType()) + 1);
 					}
 				}
 				
-				drawRectangle(chunky.getX1(), chunky.getY1(),
-						chunky.getWidth(), chunky.getHeight(), image,
-						Color.red, chunky, mode);
-				
-				/*
-				String text = chunky.getMostPopularWordFont() + ";" 
-						+ chunky.getMostPopularWordStyle();
-				if( mode != LapdfMode.BLOCK_ONLY )
-					text = chunky.getType();
-				*/
-				
-				drawWord( chunky.getX1() - 20, 
-						chunky.getY1() , 
-						image, 
-						Color.black,
-						String.format("%4f", chunky.readDensity()), 
-						12);
+				drawRectangle(chunk.getX1(), chunk.getY1(),
+						chunk.getWidth(), chunk.getHeight(), image,
+						Color.red, chunk);
 				
 			} else if (block != null) {
 				
 				WordBlock w = (WordBlock) block;
 				ChunkBlock chunky = (ChunkBlock) w.getContainer();
 				PageBlock page = w.getPage();
-								
-				int hSpace = 3;
-				int vSpace = 3;
-				try {
-					hSpace = page.getMostPopularWordHeightPage() / 2 + 
+						
+				int hSpace = page.getMostPopularWordHeightPage() / 2 + 
 							page.getMostPopularHorizontalSpaceBetweenWordsPage();
-					vSpace = page.getMostPopularWordHeightPage() / 2 + 
+				int vSpace = page.getMostPopularWordHeightPage() / 2 + 
 							page.getMostPopularVerticalSpaceBetweenWordsPage();
-				} catch(Exception e) {
-					e.printStackTrace();
-				}
 				
-				Integer colorCode = (mode == 1) ? colorDecider(chunky.getType())
-						: 0x000000;
-
 				drawRectangle(w.getX1(), w.getY1(),
 						w.getWidth(), w.getHeight(),
-						image, new Color(colorCode), block, mode);
+						image, Color.black, block);
 
 				if( w.getFontStyle() != null) {
 				
@@ -211,6 +258,48 @@ public class PageImageOutlineRenderer {
 							String.format("%d", w.getOrderAddedToChunk()), 
 							8);
 				}
+
+			}
+
+		}
+
+	}	
+	
+	private static void renderChunksByType(List<Block> entityList,
+			BufferedImage image) {
+
+		int i = 0;
+		for (Block block : entityList) {
+			if (block instanceof ChunkBlock) {
+
+				ChunkBlock chunk = (ChunkBlock) block;
+
+				if( chunk.getType().equals(Block.TYPE_UNCLASSIFIED) ) {
+					if (countMap.get(Block.TYPE_UNCLASSIFIED) == null) {
+						countMap.put(Block.TYPE_UNCLASSIFIED, 1);
+					} else {
+						countMap.put(Block.TYPE_UNCLASSIFIED,
+								countMap.get(Block.TYPE_UNCLASSIFIED) + 1);
+					}
+				} else {
+					if (countMap.get(chunk.getType()) == null) {
+						countMap.put(chunk.getType(), 1);
+					} else {
+						countMap.put(chunk.getType(),
+								countMap.get(chunk.getType()) + 1);
+					}
+				}
+				
+				drawRectangle(chunk.getX1(), chunk.getY1(),
+						chunk.getWidth(), chunk.getHeight(), image,
+						Color.red, chunk);
+				
+				drawWord( chunk.getX1() - 20, 
+						chunk.getY1() , 
+						image, 
+						Color.black,
+						(i++) + ":" + chunk.getType(), 
+						12);
 
 			}
 
@@ -293,24 +382,16 @@ public class PageImageOutlineRenderer {
 	}
 
 	private static void drawRectangle(int x, int y, int width, int height,
-			BufferedImage image, Color color, Block block, int mode) {
+			BufferedImage image, Color color, Block block) {
 
 		Graphics2D graphics = image.createGraphics();
 
 		graphics.setPaint(color);
 
 		Rectangle rect = new Rectangle(x, y, width, height);
-		if ( block instanceof WordBlock && mode == LapdfMode.BLOCK_ONLY ) {
-
-			graphics.draw(rect);
-			graphics.fill(rect);
-			
-		} else {
-
-			graphics.draw(rect);
-
-		}
-
+		
+		graphics.draw(rect);
+		
 	}
 
 	private static void drawWord(int x, int y, int width, int height,
@@ -395,6 +476,7 @@ public class PageImageOutlineRenderer {
 
 			File outputfile = new File(fileName);
 			ImageIO.write(image, "png", outputfile);
+			
 		} catch (IOException e) {
 
 		}

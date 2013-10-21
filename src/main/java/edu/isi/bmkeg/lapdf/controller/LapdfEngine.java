@@ -1,13 +1,13 @@
 package edu.isi.bmkeg.lapdf.controller;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,15 +21,16 @@ import edu.isi.bmkeg.lapdf.classification.ruleBased.RuleBasedChunkClassifier;
 import edu.isi.bmkeg.lapdf.extraction.exceptions.AccessException;
 import edu.isi.bmkeg.lapdf.extraction.exceptions.ClassificationException;
 import edu.isi.bmkeg.lapdf.extraction.exceptions.EncryptionException;
+import edu.isi.bmkeg.lapdf.features.ChunkFeatures;
 import edu.isi.bmkeg.lapdf.model.Block;
 import edu.isi.bmkeg.lapdf.model.ChunkBlock;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
 import edu.isi.bmkeg.lapdf.model.PageBlock;
-import edu.isi.bmkeg.lapdf.model.WordBlock;
 import edu.isi.bmkeg.lapdf.model.RTree.RTModelFactory;
+import edu.isi.bmkeg.lapdf.model.factory.AbstractModelFactory;
 import edu.isi.bmkeg.lapdf.model.ordering.SpatialOrdering;
-import edu.isi.bmkeg.lapdf.model.spatial.SpatialEntity;
 import edu.isi.bmkeg.lapdf.parser.RuleBasedParser;
+import edu.isi.bmkeg.lapdf.pmcXml.PmcXmlArticle;
 import edu.isi.bmkeg.lapdf.text.SectionsTextWriter;
 import edu.isi.bmkeg.lapdf.text.SpatialLayoutFeaturesReportGenerator;
 import edu.isi.bmkeg.lapdf.text.SpatiallyOrderedChunkTextWriter;
@@ -38,12 +39,8 @@ import edu.isi.bmkeg.lapdf.utils.JPedalPDFRenderer;
 import edu.isi.bmkeg.lapdf.utils.PageImageOutlineRenderer;
 import edu.isi.bmkeg.lapdf.xml.OpenAccessXMLWriter;
 import edu.isi.bmkeg.lapdf.xml.SpatialXMLWriter;
-import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLChunk;
-import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
-import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLPage;
-import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLRectangle;
-import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLWord;
 import edu.isi.bmkeg.utils.Converters;
+import edu.isi.bmkeg.utils.xml.XmlBindingTools;
 
 
 /**
@@ -157,7 +154,7 @@ public class LapdfEngine  {
 				+ stem + "_spatial.xml");
 
 		if( this.isImgFlag() )
-			this.dumpImageOutlinesToFiles(doc, outDir, stem, LapdfMode.BLOCK_ONLY);
+			this.dumpWordOrderImageOutlinesToFiles(doc, outDir, stem);
 		
 		SpatialXMLWriter sxw = new SpatialXMLWriter();
 		sxw.write(doc, outDir.getPath() + "/" + stem + "_spatial.xml");
@@ -210,7 +207,7 @@ public class LapdfEngine  {
 		classifyDocument(doc, this.getRuleFile());
 		
 		if( this.isImgFlag() )
-			this.dumpImageOutlinesToFiles(doc, outDir, stem, LapdfMode.CLASSIFY);
+			this.dumpWordOrderImageOutlinesToFiles(doc, outDir, stem);
 		
 		logger.info("Writing block classified XML in OpenAccess format "
 						+ outDir.getPath() + "/" + stem + "_rhetorical.xml");
@@ -263,7 +260,7 @@ public class LapdfEngine  {
 		classifyDocument(doc, this.getRuleFile());
 		
 		if( this.isImgFlag() )
-			this.dumpImageOutlinesToFiles(doc, outDir, stem, LapdfMode.SECTION_FILTER);
+			this.dumpWordOrderImageOutlinesToFiles(doc, outDir, stem);
 
 		
 		SpatiallyOrderedChunkTypeFilteredTextWriter soctftw = 
@@ -327,7 +324,7 @@ public class LapdfEngine  {
 		this.classifyDocument(document, f);
 		
 		if( this.isImgFlag() )
-			this.dumpImageOutlinesToFiles(document, new File("."), "debug", LapdfMode.CLASSIFY);
+			this.dumpWordOrderImageOutlinesToFiles(document, new File("."), "debug");
 		
 	}
 	
@@ -477,12 +474,7 @@ public class LapdfEngine  {
 		return sb.toString();
 
 	}
-	
-	
-	
-
-	
-	
+		
 	/**
 	 * Write out the blocked LapdfDocument object to XML
 	 * @param doc
@@ -500,12 +492,15 @@ public class LapdfEngine  {
 	 * Write an LapdfDocument out to an OpenAccess-compatible XML format
 	 * @param doc
 	 * @param out
+	 * @throws Exception 
 	 */
-	public void writeSectionsToOpenAccessXmlFile(LapdfDocument doc, File out) {
+	public void writeSectionsToOpenAccessXmlFile(LapdfDocument doc, File out) throws Exception {
 
 		logger.info("Writing block-classified XML in OpenAccess format " + out.getPath() );
-		OpenAccessXMLWriter oaxw = new OpenAccessXMLWriter();
-		oaxw.write(doc, out.getPath() );
+		
+		PmcXmlArticle xmlDoc = doc.convertToPmcXmlFormat();
+		
+		XmlBindingTools.saveAsXml(xmlDoc, out);	
 
 	}
 
@@ -536,37 +531,56 @@ public class LapdfEngine  {
 	}
 	
 	/**
-	 * Render images of the positions of words on each page of pdf, color coded by section
+	 * Render images of the positions of words on each page of pdf annotated with order of being 
+	 * added to the block.
 	 * @param doc
 	 * @param dir
 	 * @param stem
 	 * @param mode
 	 * @throws IOException
 	 */
-	public void dumpImageOutlinesToFiles(LapdfDocument doc, File dir, String stem, int lapdfMode) 
+	public void dumpWordOrderImageOutlinesToFiles(LapdfDocument doc, File dir, String stem) 
 			throws IOException {
 		
 		for (int i = 1; i <= doc.getTotalNumberOfPages(); i++) {
 			PageBlock page = doc.getPage(i);
 			File imgFile = new File(dir.getPath() + "/" + stem + "_" + page.getPageNumber() + ".png");
-			PageImageOutlineRenderer.dumpPageImageToFile(page, 
-					imgFile, 
-					stem + "_" + page.getPageNumber(), 
-					lapdfMode);
+			PageImageOutlineRenderer.dumpWordOrderPageImageToFile(page, imgFile, 
+					stem + "_" + page.getPageNumber());
 		}
 		
 	}
 	
-	public List<BufferedImage> buildPageImageList(LapdfDocument doc, String stem, int lapdfMode) 
+	/**
+	 * Render images of the positions of chunks on each page annotated with chunk types.
+	 * @param doc
+	 * @param dir
+	 * @param stem
+	 * @param lapdfMode
+	 * @throws IOException
+	 */
+	public void dumpChunkTypeImageOutlinesToFiles(LapdfDocument doc, File dir, String stem) 
+			throws IOException {
+		
+		for (int i = 1; i <= doc.getTotalNumberOfPages(); i++) {
+			PageBlock page = doc.getPage(i);
+			File imgFile = new File(dir.getPath() + "/" + stem + "_" + page.getPageNumber() + ".png");
+			PageImageOutlineRenderer.dumpChunkTypePageImageToFile(page, imgFile, 
+					stem + "_" + page.getPageNumber());
+		}
+		
+	}
+	
+	public List<BufferedImage> buildWordOrderImageList(LapdfDocument doc, String stem) 
 			throws IOException {
 		
 		List<BufferedImage> imgList = new ArrayList<BufferedImage>();
 		
 		for (int i = 1; i <= doc.getTotalNumberOfPages(); i++) {
 			PageBlock page = doc.getPage(i);
-			BufferedImage img = PageImageOutlineRenderer.createPageImage(page, 
-					stem + "_" + page.getPageNumber(), 
-					lapdfMode);
+			BufferedImage img = PageImageOutlineRenderer.createPageImageForBlocksWordOrder(
+					page, stem + "_" + page.getPageNumber()
+					);
 			imgList.add(img);
 		}
 		
@@ -613,5 +627,189 @@ public class LapdfEngine  {
 		stw.write(doc, out.getPath() );
 	
 	}
+	
+	
+	/**
+	 * 
+	 * @param doc
+	 * @param outputFile
+	 * @throws IOException
+	 */
+	public void dumpFeaturesToSpreadsheet(LapdfDocument doc, File outputFile) 
+			throws IOException {
+		
+		/*
+		 * The features of ChunkBlocks to include
+		 *  
+		 *  features
+		 *  
+		 *   1. isMostPopularFontInDocument
+		 *   2. isNextMostPopularFontInDocument
+		 *   3. getHeightDifferenceBetweenChunkWordAndDocumentWord
+		 *   4. isInTopHalf
+		 *   5. getMostPopularFontSize
+		 *   6. isAllCapitals
+		 *   7. isMostPopularFontModifierBold
+		 *   8. isMostPopularFontModifierItalic
+		 *   9. isContainingFirstLineOfPage
+		 *  10. isContainingLastLineOfPage
+		 *  11. isOutlier
+		 *  12. getChunkTextLength
+		 *  13. readDensity
+		 *  14. isAlignedWithColumnBoundaries
+		 *  15. getPageNumber
+		 *  16. isColumnCentered
+		 *  17. isWithinBodyTextFrame
+		 *  
+		 *  properties
+		 *  
+		 *  21. getMostPopularWordHeight
+		 *  22. getMostPopularWordSpaceWidth
+		 *  23. getMostPopularWordFont
+		 *  24. getMostPopularWordStyle
+		 *  25. readNumberOfLine
+		 *  26. isHeaderOrFooter
+		 *  27. readChunkText
+		 */
+		int nFeatures = 27;
+		AbstractModelFactory modelFactory = new RTModelFactory();
+		
+		StringBuffer sb = new StringBuffer();
+		sb.append("RuleSet," + doc.getPdfFile().getName() + "\n");
+		sb.append("Import,\"edu.isi.bmkeg.lapdf.features.ChunkFeatures,edu.isi.bmkeg.lapdf.model.ChunkBlock\"\n");
+		sb.append("Variables,\"ChunkBlock chunk, ChunkFeatures chunkFeature\"\n");
+		sb.append("Sequential,true\n");
+		sb.append(",,,\n");
+		sb.append(",,RuleTable\n");
+
+		// Row 8
+		sb.append("NAME,DESCRIPTION");		
+		for (int i = 0; i < nFeatures; i++) {
+			sb.append(",CONDITION");		
+		}
+		sb.append(",ACTION\n");
+		
+		// Row 9
+		sb.append(",Class Name or Operation");
+		for (int i = 0; i < 17; i++) {
+			sb.append(",ChunkFeatures");		
+		}
+		for (int i = 0; i < 8; i++) {
+			sb.append(",eval");		
+		}
+		sb.append(",\n");
+		
+		// Row 10
+		sb.append(",Attribute or Condition");
+		FEATURES: {
+			sb.append(",mostPopularFontInDocument==$param");	// 1	
+			sb.append(",nextMostPopularFontInDocument==$param");	// 2	
+			sb.append(",heightDifferenceBetweenChunkWordAndDocumentWord==$param");	// 3
+			sb.append(",inTopHalf==$param");	// 4	
+			sb.append(",mostPopularFontSize==$param");	// 5
+			sb.append(",allCapitals==$param");	// 6
+			sb.append(",mostPopularFontModifierBold==$param");	// 7
+			sb.append(",mostPopularFontModifierItalic==$param");	// 8	
+			sb.append(",containingFirstLineOfPage==$param");	// 9
+			sb.append(",containingLastLineOfPage==$param");	// 10
+			sb.append(",outlier==$param");	// 11
+			sb.append(",chunkTextLength==$param");	// 12
+			sb.append(",density==$param");	// 13
+			sb.append(",alignedWithColumnBoundaries==$param");	// 14
+			sb.append(",pageNumber==$param");	// 15
+			sb.append(",columnCentered==$param");	// 16
+			sb.append(",withinBodyTextFrame==$param");	// 17
+			sb.append(",chunk.getMostPopularWordHeight==$param");	// 18
+			sb.append(",chunk.getMostPopularWordSpaceWidth==$param");	// 19
+			sb.append(",chunk.getMostPopularWordFont==$param");	// 20
+			sb.append(",chunk.getMostPopularWordStyle==$param");	// 21
+			sb.append(",chunk.readNumberOfLine==$param");	// 22
+			sb.append(",chunk.isHeaderOrFooter==$param");	// 23
+			sb.append(",chunk.readLeftRightMidLine==$param");	// 24
+			sb.append(",chunk.readChunkText==$param");	// 25
+		}
+		sb.append(",chunk.setType($param);\n");
+		
+		// Row 10
+		sb.append("Name of Rule, Description of Rule (Textual documentation)");
+		FEATURES: {
+			sb.append(",The most popular font");	// 1	
+			sb.append(",Next most popular font");	// 2	
+			sb.append(",Height difference between chunk height and document height");	// 3
+			sb.append(",Is in the top half");	// 4	
+			sb.append(",The most popular font size");	// 5	
+			sb.append(",Is all capitals");	// 6	
+			sb.append(",Is the most popular aligned font bold?");	// 7	
+			sb.append(",Is the most popular aligned font itallics?");	// 8	
+			sb.append(",Does this contain the first line of the page");	// 9	
+			sb.append(",Does this contain the last line of the page");	// 10	
+			sb.append(",Is an outlier");	// 11
+			sb.append(",The chunk length");	// 12	
+			sb.append(",The density of words the block");	// 13	
+			sb.append(",Is this aligned with column boundaries");	// 14	
+			sb.append(",pageNumber==$param");	// 15
+			sb.append(",is centered in the column");	// 16	
+			sb.append(",is within the frame");	// 17	
+			sb.append(",most popular font height");	// 18	
+			sb.append(",most popular word space");	// 19	
+			sb.append(",most popular word font");	// 20	
+			sb.append(",most popular word style");	// 21	
+			sb.append(",number of lines");	// 22
+			sb.append(",is a header or footer");	// 23	
+			sb.append(",is left/right/midline");	// 24	
+			sb.append(",chunk text");	// 25
+		}
+		sb.append(",chunk.setType($param);\n");
+		
+		int n = doc.getTotalNumberOfPages();
+		for (int i = 1; i <= n; i++)	{
+			PageBlock page = doc.getPage(i);
+			
+			List<ChunkBlock> blocks = page.getAllChunkBlocks(
+					SpatialOrdering.PAGE_COLUMN_AWARE_MIXED_MODE );
+			
+			for( int j=0; j<blocks.size(); j++) {
+				ChunkBlock b = blocks.get(j);
+				ChunkFeatures cf = new ChunkFeatures(b, modelFactory);
+				
+				sb.append("p:"+i+"."+j+",");	// 1	
+				sb.append("," + cf.isMostPopularFontInDocument() );	// 1	
+				sb.append("," + cf.isNextMostPopularFontInDocument() );	// 2	
+				sb.append("," + cf.getHeightDifferenceBetweenChunkWordAndDocumentWord() );	// 3
+				sb.append("," + cf.isInTopHalf() );	// 4	
+				sb.append("," + cf.getMostPopularFontSize() );	// 5	
+				sb.append("," + cf.isAllCapitals() );	// 6	
+				sb.append("," + cf.isMostPopularFontModifierBold() );	// 7	
+				sb.append("," + cf.isMostPopularFontModifierItalic() );	// 8	
+				sb.append("," + cf.isContainingFirstLineOfPage() );	// 9	
+				sb.append("," + cf.isContainingLastLineOfPage() );	// 10	
+				sb.append("," + cf.isOutlier() );	// 11	
+				sb.append("," + cf.getChunkTextLength() );	// 12	
+				sb.append("," + cf.getDensity() );	// 13
+				sb.append("," + cf.isAlignedWithColumnBoundaries() );	// 14	
+				sb.append("," + cf.getPageNumber() );	// 15
+				sb.append("," + cf.isColumnCentered() );	// 16	
+				sb.append("," + cf.isWithinBodyTextFrame() );	// 17	
+				sb.append("," + b.getMostPopularWordHeight() );	// 18	
+				sb.append("," + b.getMostPopularWordSpaceWidth() );	// 19	
+				sb.append("," + b.getMostPopularWordFont() );	// 20
+				sb.append("," + b.getMostPopularWordStyle() );	// 21	
+				sb.append("," + b.readNumberOfLine() );	// 22
+				sb.append("," + b.isHeaderOrFooter() );	// 23	
+				sb.append("," + b.readLeftRightMidLine() );	// 24	
+				sb.append("," + b.readChunkText().replaceAll(",", ";") );	// 25	
+				sb.append("\n");
+					
+			}
+			
+		}
+		
+		FileWriter fw = new FileWriter(outputFile);
+		BufferedWriter bw = new BufferedWriter(fw);
+		bw.write(sb.toString());
+		bw.close();
+		
+	}
+
 
 }

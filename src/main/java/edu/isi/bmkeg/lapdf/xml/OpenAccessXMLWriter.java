@@ -35,12 +35,16 @@ public class OpenAccessXMLWriter implements XMLWriter {
 	public static final String ELEMENT_NAME_ACKNOWLEDGEMENT = "ack";
 	public static final String ELEMENT_NAME_BACK = "back";
 	public static final String ELEMENT_NAME_REFERENCES = "ref";
+	
 	public static final AttributesImpl emptyAttribute = new AttributesImpl();
+	
 	public HashMap<String, ArrayList<ChunkBlock>> mappedDocument = new HashMap<String, ArrayList<ChunkBlock>>();
 
 	@Override
 	public void write(LapdfDocument document, String outputFilename) {
+		
 		try {
+		
 			FileOutputStream XMLOutputFileStream;
 			XMLOutputFileStream = new FileOutputStream(outputFilename);
 
@@ -58,33 +62,40 @@ public class OpenAccessXMLWriter implements XMLWriter {
 
 			documentContentHandler.startElement("", "", ELEMENT_NAME_FRONT,
 					emptyAttribute);
-			documentContentHandler.startElement("", "",
-					ELEMENT_NAME_ARTICLE_META, emptyAttribute);
-			doAbstractAndAcknowledgment(Block.TYPE_ABSTRACT,
-					documentContentHandler);
-			documentContentHandler
-					.endElement("", "", ELEMENT_NAME_ARTICLE_META);
+			documentContentHandler.startElement("", "", ELEMENT_NAME_ARTICLE_META, emptyAttribute);
+			doAbstractAndAcknowledgment(Block.TYPE_ABSTRACT, documentContentHandler);
+
+			documentContentHandler.endElement("", "", ELEMENT_NAME_ARTICLE_META);
 			documentContentHandler.endElement("", "", ELEMENT_NAME_FRONT);
 
 			documentContentHandler.startElement("", "", ELEMENT_NAME_BODY,
 					emptyAttribute);
+			
 			doSection(Block.TYPE_INTRODUCTION, documentContentHandler, document);
+			
 			doSection(Block.TYPE_METHODS, documentContentHandler, document);
+			
 			doSection(Block.TYPE_DISCUSSION, documentContentHandler, document);
 
 			doSection(Block.TYPE_RESULTS, documentContentHandler, document);
+			
 			doSection(Block.TYPE_CONCLUSIONS, documentContentHandler, document);
 
 			documentContentHandler.endElement("", "", ELEMENT_NAME_BODY);
 			documentContentHandler.startElement("", "", ELEMENT_NAME_BACK,
 					emptyAttribute);
+			
 			doAbstractAndAcknowledgment(Block.TYPE_ACKNOWLEDGEMENTS,
 					documentContentHandler);
+			
 			doReferences(documentContentHandler);
+			
 			documentContentHandler.endElement("", "", ELEMENT_NAME_BACK);
 			documentContentHandler.endElement("", "", ELEMENT_NAME_ARTICLE);
 			documentContentHandler.endDocument();
+			
 			XMLOutputFileStream.close();
+		
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

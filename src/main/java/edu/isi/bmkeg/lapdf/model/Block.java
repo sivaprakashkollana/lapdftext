@@ -12,6 +12,7 @@ public interface Block extends Serializable {
     public static final String TYPE_AUTHORS="authors"; 
 	public static final String TYPE_BODY = "body";
 	public static final String TYPE_HEADING = "heading";
+	public static final String TYPE_SUBTITLE = "subtitle";
 
 	public static final String TYPE_ABSTRACT="abstract";
 	public static final String TYPE_ABSTRACT_HEADING="abstract.heading";

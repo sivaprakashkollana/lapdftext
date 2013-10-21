@@ -1,16 +1,27 @@
 package edu.isi.bmkeg.lapdf.model;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import edu.isi.bmkeg.lapdf.extraction.exceptions.InvalidPopularSpaceValueException;
 import edu.isi.bmkeg.lapdf.model.RTree.RTPageBlock;
 import edu.isi.bmkeg.lapdf.model.RTree.RTSpatialEntity;
 import edu.isi.bmkeg.lapdf.model.ordering.SpatialOrdering;
 import edu.isi.bmkeg.lapdf.model.spatial.SpatialEntity;
+import edu.isi.bmkeg.lapdf.pmcXml.ObjectFactory;
+import edu.isi.bmkeg.lapdf.pmcXml.PmcXmlArticle;
+import edu.isi.bmkeg.lapdf.pmcXml.PmcXmlBody;
+import edu.isi.bmkeg.lapdf.pmcXml.PmcXmlP;
+import edu.isi.bmkeg.lapdf.pmcXml.PmcXmlSec;
+import edu.isi.bmkeg.lapdf.pmcXml.PmcXmlTitle;
 import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLChunk;
 import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
 import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLPage;
@@ -38,7 +49,7 @@ public class LapdfDocument implements Serializable {
 	private SpatialEntity bodyTextFrame;
 
 	private boolean jPedalDecodeFailed;
-
+	
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	
 	public LapdfDocument(File pdfFile) {
@@ -338,6 +349,114 @@ public class LapdfDocument implements Serializable {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	/**
+	 * Reads the chunks whose classifications are listed in the 'sections' Set 
+	 * 
+	 * @param sections
+	 * @return
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 */
+	public String readClassifiedText(Set<String> sections) 
+			throws IOException,FileNotFoundException {
+
+		StringBuilder sb = new StringBuilder();
+		
+		int n = this.getTotalNumberOfPages();
+		for (int i = 1; i <= n; i++)	{
+			PageBlock page = this.getPage(i);
+			
+			List<ChunkBlock> chunksPerPage = page.getAllChunkBlocks(
+					SpatialOrdering.PAGE_COLUMN_AWARE_MIXED_MODE
+					);
+			
+			for(ChunkBlock chunkBlock:chunksPerPage){
+				if( sections.contains( chunkBlock.getType() ) ) {
+					sb.append(chunkBlock.readChunkText() + "\n");
+				} 
+			}
+		}
+		
+		return sb.toString();
+
+	}
+	
+	
+	/**
+	 * Reads the chunks whose classifications start with 'stem'.
+	 * 
+	 * @param sections
+	 * @return
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 */
+	public List<ChunkBlock> readClassifiedChunkBlocks(Set<String> sections) 
+			throws IOException,FileNotFoundException {
+
+		List<ChunkBlock> blocks = new ArrayList<ChunkBlock>(); 
+		
+		int n = this.getTotalNumberOfPages();
+		for (int i = 1; i <= n; i++)	{
+			PageBlock page = this.getPage(i);
+			
+			List<ChunkBlock> chunksPerPage = page.getAllChunkBlocks(
+					SpatialOrdering.PAGE_COLUMN_AWARE_MIXED_MODE
+					);
+			
+			for(ChunkBlock chunkBlock:chunksPerPage){
+				if( sections.contains( chunkBlock.getType() ) ) {
+					blocks.add( chunkBlock );
+				} 
+			}
+		}
+		
+		return blocks;
+
+	}
+	
+	public List<ChunkBlock> readStemmedChunkBlocks(String stem) 
+			throws IOException,FileNotFoundException {
+
+		List<ChunkBlock> blocks = new ArrayList<ChunkBlock>(); 
+		
+		int n = this.getTotalNumberOfPages();
+		for (int i = 1; i <= n; i++)	{
+			PageBlock page = this.getPage(i);
+			
+			List<ChunkBlock> chunksPerPage = page.getAllChunkBlocks(
+					SpatialOrdering.PAGE_COLUMN_AWARE_MIXED_MODE
+					);
+			
+			for(ChunkBlock chunkBlock:chunksPerPage){
+				if( chunkBlock.getType().startsWith(stem) ) {
+					blocks.add( chunkBlock );
+				} 
+			}
+		}
+		
+		return blocks;
+
+	}
+	
+	public List<ChunkBlock> readAllChunkBlocks() 
+			throws IOException,FileNotFoundException {
+
+		List<ChunkBlock> blocks = new ArrayList<ChunkBlock>(); 
+		
+		int n = this.getTotalNumberOfPages();
+		for (int i = 1; i <= n; i++)	{
+			PageBlock page = this.getPage(i);
+			
+			blocks.addAll( page.getAllChunkBlocks(
+					SpatialOrdering.PAGE_COLUMN_AWARE_MIXED_MODE
+					));
+			
+		}
+		
+		return blocks;
+
+	}
+	
+	/**
 	 * Convert the LapdfDocument to XML Objects
 	 * @param doc
 	 * @param out
@@ -426,5 +545,223 @@ public class LapdfDocument implements Serializable {
 		return xmlDoc;
 	
 	}
+
+	/**
+	 * Converts to PMC Open Access Format. Note that to classify text for this format
+	 * requires, 'body', 'heading', 'subtitle', 'figure legend' and 'reference' section blocks
+	 * @return
+	 * @throws Exception
+	 */
+	
+	public PmcXmlArticle convertToPmcXmlFormat() throws Exception {
+		
+		ObjectFactory factory = new ObjectFactory();
+		PmcXmlArticle xmlDoc = factory.createPmcXmlArticle();
+		PmcXmlBody xmlBody = factory.createPmcXmlBody();
+		xmlDoc.setBody(xmlBody);
+		
+		List<PmcXmlSec> xmlSecList = xmlBody.getSecs();
+
+		//
+		// When converting to this format, we only attempt to screen out headers, 
+		// footers and figures and make sure the rest of the text is present 
+		//
+			
+		//
+		// If not sections are being named, then we pull them out here
+		//
+		// NOTE: WHAT ABOUT OAI SECTION NAMES FOR DOCUMENT SECTION TYPES?
+		//
+		xmlSecList.addAll( this.buildPmxXmlSecListFromBodyHeading(true) );
+		
+		xmlSecList.addAll(buildPmxXmlSecListFromStem( Block.TYPE_REFERENCES ));
+
+		xmlSecList.addAll(buildPmxXmlSecListFromStem( Block.TYPE_FIGURE_LEGEND ));		
+			
+		return xmlDoc;
+	
+	}
+
+	/**
+	 * 
+	 * @param stem
+	 * @return
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 */
+	private List<PmcXmlSec> buildPmxXmlSecListFromStem( String stem ) throws IOException,
+			FileNotFoundException {
+
+		boolean goFlag = false;
+		
+		ObjectFactory factory = new ObjectFactory();
+		List<PmcXmlSec> xmlSecList = new ArrayList<PmcXmlSec>();
+		
+		PmcXmlSec xmlSec = factory.createPmcXmlSec();
+		xmlSec.setSecType(stem);
+		
+		List<Object> pList = xmlSec.getAddressesAndAlternativesAndArraies();
+		PmcXmlP xmlP = factory.createPmcXmlP();
+		pList.add(xmlP);
+		List<Object> content = xmlP.getContent();
+		
+		List<ChunkBlock> blocks = this.readStemmedChunkBlocks(stem);
+		for ( ChunkBlock b : blocks ) {
+			
+			if( b.getType().equals(stem) || 
+					b.getType().equals(stem + ".body")) {
+			
+				//
+				// As soon as we get some text, we add the first block 
+				//
+				if( !goFlag ) {
+					xmlSecList.add(xmlSec);
+					goFlag = true;
+				}
+				content.add( b.readChunkText() );
+			
+			} else if( b.getType().equals(stem + ".heading") ||
+					 b.getType().equals(stem + ".subtitle") ) {
+				
+				PmcXmlTitle xmlSecTitle = xmlSec.getTitle();
+				if(xmlSecTitle == null) {
+					xmlSecTitle = factory.createPmcXmlTitle();
+					xmlSec.setTitle(xmlSecTitle);
+				} else {
+					xmlSec = factory.createPmcXmlSec();
+					xmlSecList.add(xmlSec);
+					xmlSec.setSecType(stem);
+					xmlSecTitle = factory.createPmcXmlTitle();
+					xmlSec.setTitle(xmlSecTitle);
+				}					
+				List<Object> title = xmlSecTitle.getContent();
+				title.add( b.readChunkText() );
+								
+			}
+			
+		}
+		
+		return xmlSecList;
+		
+	}
+	
+	/**
+	 * 
+	 * @param stem
+	 * @return
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 */
+	private List<PmcXmlSec> buildPmxXmlSecListFromBodyHeading(boolean includeUnclassified) 
+			throws IOException, FileNotFoundException {
+
+		boolean goFlag = false;
+
+		ObjectFactory factory = new ObjectFactory();
+		List<PmcXmlSec> xmlSecList = new ArrayList<PmcXmlSec>();
+		
+		PmcXmlSec xmlSec = factory.createPmcXmlSec();
+		xmlSec.setSecType(Block.TYPE_BODY);		
+		List<Object> pList = xmlSec.getAddressesAndAlternativesAndArraies();
+		xmlSecList.add(xmlSec);
+		
+		List<ChunkBlock> blocks = this.readAllChunkBlocks();
+		for ( ChunkBlock b : blocks ) {
+			
+			if( b.getType().equals(Block.TYPE_BODY) || 
+					(b.getType().equals(Block.TYPE_UNCLASSIFIED) && includeUnclassified ) 
+					) {
+			
+				if( !goFlag ) {
+					goFlag = true;
+				}
+				PmcXmlP xmlP = factory.createPmcXmlP();
+				pList.add(xmlP);
+				List<Object> content = xmlP.getContent();
+				content.add( b.readChunkText() );
+			
+			} else if( b.getType().equals(Block.TYPE_HEADING) ||
+					 b.getType().equals(Block.TYPE_SUBTITLE) ) {
+				
+				if( !goFlag ) {
+					goFlag = true;
+				}
+				
+				PmcXmlTitle xmlSecTitle = xmlSec.getTitle();
+				if(xmlSecTitle == null) {
+					xmlSecTitle = factory.createPmcXmlTitle();
+					xmlSec.setTitle(xmlSecTitle);
+				} else {
+					xmlSec = factory.createPmcXmlSec();
+					xmlSecList.add(xmlSec);
+					xmlSec.setSecType(Block.TYPE_BODY);
+					xmlSecTitle = factory.createPmcXmlTitle();
+					xmlSec.setTitle(xmlSecTitle);
+					pList = xmlSec.getAddressesAndAlternativesAndArraies();
+				}					
+				List<Object> title = xmlSecTitle.getContent();
+				title.add( b.readChunkText() );
+								
+			} 
+			
+		}
+		
+		if( goFlag )
+			return xmlSecList;
+		
+		return null;
+		
+	}
+	
+	
+	private List<PmcXmlSec> buildPmxXmlSecList( Set<String> sectionsToInclude ) throws IOException,
+			FileNotFoundException {
+
+		ObjectFactory factory = new ObjectFactory();
+		List<PmcXmlSec> xmlSecList = new ArrayList<PmcXmlSec>();
+
+		PmcXmlSec xmlSec = factory.createPmcXmlSec();
+		xmlSec.setSecType(Block.TYPE_INTRODUCTION);
+
+		List<Object> pList = xmlSec.getAddressesAndAlternativesAndArraies();
+		PmcXmlP xmlP = factory.createPmcXmlP();
+		pList.add(xmlP);
+		List<Object> content = xmlP.getContent();
+
+		List<ChunkBlock> blocks = this.readClassifiedChunkBlocks(sectionsToInclude);
+		
+		for (ChunkBlock b : blocks) {
+
+			if (b.getType().equals(Block.TYPE_INTRODUCTION)
+					|| b.getType().equals(Block.TYPE_INTRODUCTION_BODY)) {
+
+				content.add(b.readChunkText());
+
+			} else if (b.getType().equals(Block.TYPE_INTRODUCTION_HEADING)
+					|| b.getType().equals(Block.TYPE_INTRODUCTION_SUBTITLE)) {
+
+				PmcXmlTitle xmlSecTitle = xmlSec.getTitle();
+				if (xmlSecTitle == null) {
+					xmlSecTitle = factory.createPmcXmlTitle();
+					xmlSec.setTitle(xmlSecTitle);
+				} else {
+					xmlSec = factory.createPmcXmlSec();
+					xmlSecList.add(xmlSec);
+					xmlSec.setSecType(Block.TYPE_INTRODUCTION);
+					xmlSecTitle = factory.createPmcXmlTitle();
+					xmlSec.setTitle(xmlSecTitle);
+				}
+				List<Object> title = xmlSecTitle.getContent();
+				title.add(b.readChunkText());
+
+			}
+
+		}
+
+		return xmlSecList;
+
+	}
+
+	
 	
 }

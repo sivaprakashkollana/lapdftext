@@ -119,21 +119,24 @@ public class JPedalExtractor implements Extractor {
 
 	private String getFontData(String xml, String item)
 			throws UnsupportedEncodingException, IOException {
+		
 		xml = "<root>" + xml + "</root>";
 
 		try {
 
 			xmlDocument = docBuilder.parse(new ByteArrayInputStream(xml
 					.getBytes("UTF-8")));
-		} catch (SAXException e) {
+			Element font = (Element) xmlDocument.getElementsByTagName("font").item(
+					0);
+			return font.getAttribute(item);
+			
+		} catch (Exception e) {
 
 			return null;
 
 		}
 
-		Element font = (Element) xmlDocument.getElementsByTagName("font").item(
-				0);
-		return font.getAttribute(item);
+		
 
 	}
 
