@@ -664,14 +664,14 @@ public class LapdfEngine  {
 		 *  properties
 		 *  
 		 *  18. getMostPopularWordHeight
-		 *  22. getMostPopularWordSpaceWidth
-		 *  23. getMostPopularWordFont
-		 *  24. getMostPopularWordStyle
-		 *  25. readNumberOfLine
-		 *  26. isHeaderOrFooter
-		 *  27. readChunkText
+		 *  19. getMostPopularWordSpaceWidth
+		 *  20. getMostPopularWordFont
+		 *  21. getMostPopularWordStyle
+		 *  22. readNumberOfLine
+		 *  23. isHeaderOrFooter
+		 *  24. readChunkText
 		 */
-		int nFeatures = 27;
+		int nFeatures = 24;
 		AbstractModelFactory modelFactory = new RTModelFactory();
 		
 		StringBuffer sb = new StringBuffer();
