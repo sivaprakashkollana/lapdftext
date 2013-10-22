@@ -133,8 +133,8 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 	@Override
 	public String readLeftRightMidLine() {
 		
-		if (alignment != null)
-			return alignment;
+		if (this.alignment != null)
+			return this.alignment;
 		
 		PageBlock parent = (PageBlock) this.getContainer();
 		int median = parent.getMedian();
@@ -142,29 +142,31 @@ public class RTChunkBlock extends RTSpatialEntity implements ChunkBlock {
 		int width = this.getWidth();
 		int averageWordHeightForTheDocument = parent.getDocument().readMostPopularWordHeight();
 
-		// Conditions for left
-		if (X1 < median && 
-				(X1 + width) < (median + averageWordHeightForTheDocument))
-			return LEFT;
-		// conditions for right
-		if (X1 > median)
-			return RIGHT;
-		// conditions for midline
-		int left = median - X1;
-		int right = X1 + width - median;
-		/*
-		 * Doubtful code if(right <= 0) return LEFT;
-		 */
-		double leftIsToRight = (double) left / (double) right;
-		double rightIsToLeft = (double) right / (double) left;
-		if (leftIsToRight < 0.05)
-			alignment = RIGHT;
-		else if (rightIsToLeft < 0.05)
-			alignment = LEFT;
-		else
-			alignment = MIDLINE;
+		if ( X1 + width < median ) {
+		
+			this.alignment = LEFT;	
+		
+		} else if (X1 > median) {
 
-		return alignment;
+			this.alignment = RIGHT;
+		
+		} else {
+		
+			int left = median - X1;
+			int right = X1 + width - median;
+
+			double leftIsToRight = (double) left / (double) right;
+			double rightIsToLeft = (double) right / (double) left;
+			if (leftIsToRight < 0.05)
+				this.alignment = RIGHT;
+			else if (rightIsToLeft < 0.05)
+				this.alignment = LEFT;
+			else
+				this.alignment = MIDLINE;
+		}
+			
+		return this.alignment;
+	
 	}
 
 	public boolean isFlush(String condition, int value) {

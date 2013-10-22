@@ -43,7 +43,7 @@ public class RuleBasedChunkClassifier implements Classifier<ChunkBlock> {
 			DecisionTableConfiguration dtableconfiguration) throws IOException  {
 		
 		String rules = DecisionTableFactory.loadFromInputStream(ResourceFactory.newFileResource(droolsFileName).getInputStream(), dtableconfiguration);
-		logger.debug(rules);
+		logger.info( "GENERATED RULE FILE FROM SPREADSHEET:\n" + rules);
 		
 	}
 	

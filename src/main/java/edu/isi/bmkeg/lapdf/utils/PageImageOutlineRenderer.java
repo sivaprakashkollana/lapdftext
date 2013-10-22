@@ -98,13 +98,13 @@ public class PageImageOutlineRenderer {
 		drawWord(width / 2 - 50, 10, image, Color.black,
 				label + ":" + page.getPageNumber(), 10);
 
-		List<ChunkBlock> cbList = page.getAllChunkBlocks(SpatialOrdering.MIXED_MODE);
+		List<ChunkBlock> cbList = page.getAllChunkBlocks(SpatialOrdering.COLUMN_AWARE_MIXED_MODE);
 		List<Block> list = new ArrayList<Block>(cbList);
 		
 		// renderBlockPerImage(list, image, fileName);
 		renderBlocksByWordOrder(list, image);
 
-		List<WordBlock> wbList = page.getAllWordBlocks(SpatialOrdering.MIXED_MODE);
+		List<WordBlock> wbList = page.getAllWordBlocks(SpatialOrdering.COLUMN_AWARE_MIXED_MODE);
 		list = new ArrayList<Block>(wbList);
 		renderBlocksByWordOrder(list, image);
 
@@ -134,7 +134,7 @@ public class PageImageOutlineRenderer {
 		drawWord(width / 2 - 50, 10, image, Color.black,
 				label + ":" + page.getPageNumber(), 10);
 
-		List<ChunkBlock> cbList = page.getAllChunkBlocks(SpatialOrdering.MIXED_MODE);
+		List<ChunkBlock> cbList = page.getAllChunkBlocks(SpatialOrdering.COLUMN_AWARE_MIXED_MODE);
 		List<Block> list = new ArrayList<Block>(cbList);
 		
 		renderChunksByType(list, image);

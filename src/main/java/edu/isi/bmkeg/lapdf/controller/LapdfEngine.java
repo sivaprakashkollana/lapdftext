@@ -669,9 +669,10 @@ public class LapdfEngine  {
 		 *  21. getMostPopularWordStyle
 		 *  22. readNumberOfLine
 		 *  23. isHeaderOrFooter
-		 *  24. readChunkText
+		 *  24. readLeftRightMidline
+		 *  25. readChunkText
 		 */
-		int nFeatures = 24;
+		int nFeatures = 25;
 		AbstractModelFactory modelFactory = new RTModelFactory();
 		
 		StringBuffer sb = new StringBuffer();
@@ -702,23 +703,23 @@ public class LapdfEngine  {
 		// Row 10
 		sb.append(",Attribute or Condition");
 		FEATURES: {
-			sb.append(",mostPopularFontInDocument==$param");	// 1	
-			sb.append(",nextMostPopularFontInDocument==$param");	// 2	
-			sb.append(",heightDifferenceBetweenChunkWordAndDocumentWord==$param");	// 3
-			sb.append(",inTopHalf==$param");	// 4	
-			sb.append(",mostPopularFontSize==$param");	// 5
-			sb.append(",allCapitals==$param");	// 6
-			sb.append(",mostPopularFontModifierBold==$param");	// 7
-			sb.append(",mostPopularFontModifierItalic==$param");	// 8	
-			sb.append(",containingFirstLineOfPage==$param");	// 9
-			sb.append(",containingLastLineOfPage==$param");	// 10
-			sb.append(",outlier==$param");	// 11
-			sb.append(",chunkTextLength==$param");	// 12
-			sb.append(",density==$param");	// 13
-			sb.append(",alignedWithColumnBoundaries==$param");	// 14
-			sb.append(",pageNumber==$param");	// 15
-			sb.append(",columnCentered==$param");	// 16
-			sb.append(",withinBodyTextFrame==$param");	// 17
+			sb.append(",mostPopularFontInDocument");	// 1	
+			sb.append(",nextMostPopularFontInDocument");	// 2	
+			sb.append(",heightDifferenceBetweenChunkWordAndDocumentWord");	// 3
+			sb.append(",inTopHalf");	// 4	
+			sb.append(",mostPopularFontSize");	// 5
+			sb.append(",allCapitals");	// 6
+			sb.append(",mostPopularFontModifierBold");	// 7
+			sb.append(",mostPopularFontModifierItalic");	// 8	
+			sb.append(",containingFirstLineOfPage");	// 9
+			sb.append(",containingLastLineOfPage");	// 10
+			sb.append(",outlier");	// 11
+			sb.append(",chunkTextLength");	// 12
+			sb.append(",density");	// 13
+			sb.append(",alignedWithColumnBoundaries");	// 14
+			sb.append(",pageNumber");	// 15
+			sb.append(",columnCentered");	// 16
+			sb.append(",withinBodyTextFrame");	// 17
 			sb.append(",chunk.getMostPopularWordHeight==$param");	// 18
 			sb.append(",chunk.getMostPopularWordSpaceWidth==$param");	// 19
 			sb.append(",chunk.getMostPopularWordFont==$param");	// 20
@@ -726,11 +727,11 @@ public class LapdfEngine  {
 			sb.append(",chunk.readNumberOfLine==$param");	// 22
 			sb.append(",chunk.isHeaderOrFooter==$param");	// 23
 			sb.append(",chunk.readLeftRightMidLine==$param");	// 24
-			sb.append(",chunk.readChunkText==$param");	// 25
+			sb.append(",chunk.isMatchingRegularExpression($param)");	// 25
 		}
 		sb.append(",chunk.setType($param);\n");
 		
-		// Row 10
+		// Row 11
 		sb.append("Name of Rule, Description of Rule (Textual documentation)");
 		FEATURES: {
 			sb.append(",The most popular font");	// 1	
@@ -757,7 +758,7 @@ public class LapdfEngine  {
 			sb.append(",number of lines");	// 22
 			sb.append(",is a header or footer");	// 23	
 			sb.append(",is left/right/midline");	// 24	
-			sb.append(",chunk text");	// 25
+			sb.append(",Define and run a regular expression on the text");	// 25
 		}
 		sb.append(",chunk.setType($param);\n");
 		

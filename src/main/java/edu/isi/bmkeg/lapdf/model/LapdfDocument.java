@@ -11,6 +11,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.drools.lang.DRLParser.in_key_return;
+
 import edu.isi.bmkeg.lapdf.extraction.exceptions.InvalidPopularSpaceValueException;
 import edu.isi.bmkeg.lapdf.model.RTree.RTPageBlock;
 import edu.isi.bmkeg.lapdf.model.RTree.RTSpatialEntity;
@@ -281,10 +283,17 @@ public class LapdfDocument implements Serializable {
 		String lastPage = this.readMostPopularFontStyleOnLastPage();
 
 		String mp = (String) this.fontFrequencyCounter.getMostPopular();
+		int mpCount = this.fontFrequencyCounter.getCount(mp);
 		String nmp = (String) this.fontFrequencyCounter.getNextMostPopular();
+		int nmpCount = this.fontFrequencyCounter.getCount(nmp);
 		String nnmp = (String) this.fontFrequencyCounter.getThirdMostPopular();
 
-		if( mp.equals( lastPage ) ) {
+		//
+		// If there is a particularly long reference section, then we use the second 
+		// most poopular font style. Need to check if the last page is not just the 
+		// same font as the rest of the document.
+		//
+		if( mp.equals( lastPage ) && mpCount < nmpCount * 7) {
 			
 			this.setMostPopularFontStyle(nmp);
 			this.setNextMostPopularFontStyle(nnmp);
@@ -423,7 +432,7 @@ public class LapdfDocument implements Serializable {
 			PageBlock page = this.getPage(i);
 			
 			List<ChunkBlock> chunksPerPage = page.getAllChunkBlocks(
-					SpatialOrdering.PAGE_COLUMN_AWARE_MIXED_MODE
+					SpatialOrdering.COLUMN_AWARE_MIXED_MODE
 					);
 			
 			for(ChunkBlock chunkBlock:chunksPerPage){
@@ -447,7 +456,7 @@ public class LapdfDocument implements Serializable {
 			PageBlock page = this.getPage(i);
 			
 			blocks.addAll( page.getAllChunkBlocks(
-					SpatialOrdering.PAGE_COLUMN_AWARE_MIXED_MODE
+					SpatialOrdering.COLUMN_AWARE_MIXED_MODE
 					));
 			
 		}
@@ -489,7 +498,7 @@ public class LapdfDocument implements Serializable {
 			xmlPage.setPageNumber( i+1 );
 			
 			Iterator<ChunkBlock> cIt = page.getAllChunkBlocks(
-					SpatialOrdering.MIXED_MODE
+					SpatialOrdering.COLUMN_AWARE_MIXED_MODE
 					).iterator();
 			
 			while( cIt.hasNext() ) {
@@ -512,7 +521,7 @@ public class LapdfDocument implements Serializable {
 				xmlChunk.setY( chunk.getY1() );
 				
 				List<SpatialEntity> wbList = page.containsByType(chunk,
-						SpatialOrdering.MIXED_MODE, 
+						SpatialOrdering.COLUMN_AWARE_MIXED_MODE, 
 						WordBlock.class);
 				if( wbList != null ) {					
 					Iterator<SpatialEntity> wbIt = wbList.iterator();

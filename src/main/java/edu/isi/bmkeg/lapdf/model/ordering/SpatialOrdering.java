@@ -25,29 +25,52 @@ public class SpatialOrdering implements Comparator<SpatialEntity> {
 	@Override
 	public int compare(SpatialEntity o1, SpatialEntity o2) {
 
+		int code = 0;
+		
 		if (HORIZONTAL_MODE.equalsIgnoreCase(mode)) {
-			return horizontalOrdering(o1, o2);
-		} else if (VERTICAL_MODE.equalsIgnoreCase(mode)) {
-			return verticalOrdering(o1, o2);
-		} else if (MIXED_MODE.equalsIgnoreCase(mode)) {
-			return mixedOrdering(o1, o2);
-		}else if (MIXED_MODE_ABSOLUTE.equalsIgnoreCase(mode)) {
-			return mixedOrderingAbsolute(o1, o2);
+		
+			code = horizontalOrdering(o1, o2);
+		
+		} 
+		else if (VERTICAL_MODE.equalsIgnoreCase(mode)) {
+		
+			code = verticalOrdering(o1, o2);
+		
+		} 
+		else if (MIXED_MODE.equalsIgnoreCase(mode)) {
+		
+			code = mixedOrdering(o1, o2);
+		
+		}
+		else if (MIXED_MODE_ABSOLUTE.equalsIgnoreCase(mode)) {
+		
+			code = mixedOrderingAbsolute(o1, o2);
+		
 		} 
 		else if (COLUMN_AWARE_MIXED_MODE.equalsIgnoreCase(mode)) {
-			return camdOrdering(o1, o2);
-		} else if (PAGE_COLUMN_AWARE_MIXED_MODE.equalsIgnoreCase(mode)) {
-			return pcamdOrdering(o1, o2);
-		} else {
-			return 0;
+		
+			code = camdOrdering(o1, o2);
+		
+		} 
+		else if (PAGE_COLUMN_AWARE_MIXED_MODE.equalsIgnoreCase(mode)) {
+		
+			code = pcamdOrdering(o1, o2);
+		
+		} 
+		else {
+		
+			code = 0;
+		
 		}
+		
+		return code;
 
 	}
 
 	private int camdOrdering(SpatialEntity o1, SpatialEntity o2) {
 
-		String o1Allignment = ((Block) o1).readLeftRightMidLine();
-		String o2Allignment = ((Block) o2).readLeftRightMidLine();
+		String o1Alignment = ((Block) o1).readLeftRightMidLine();
+		String o2Alignment = ((Block) o2).readLeftRightMidLine();
 		int pageNumber = ((PageBlock) ((Block) o1).getContainer())
 				.getPageNumber();
 		int o1y1 = o1.getY1();
@@ -56,24 +79,36 @@ public class SpatialOrdering implements Comparator<SpatialEntity> {
 				.getPageBoxHeight();
 
 		if (pageNumber == 1 && Math.abs(o1y1 - o2y1) >= .5 * pageHeight) {
+			
 			return mixedOrdering(o1, o2);
+		
 		} else if (executeHeaderFooterCheck((ChunkBlock) o1, (ChunkBlock) o2)) {
+		
 			return mixedOrdering(o1, o2);
+		
 		}
 
-		if (o1Allignment.equals(o2Allignment)) {
-			return mixedOrdering(o1, o2);
-		} else if (Block.MIDLINE.equalsIgnoreCase(o1Allignment)
-				|| Block.MIDLINE.equalsIgnoreCase(o2Allignment)) {
+		if (o1Alignment.equals(o2Alignment)) {
+
 			return mixedOrdering(o1, o2);
 
-		} else if (Block.LEFT.equalsIgnoreCase(o1Allignment)) {
+		} else if (Block.MIDLINE.equalsIgnoreCase(o1Alignment)
+				|| Block.MIDLINE.equalsIgnoreCase(o2Alignment)) {
+			
+			return mixedOrdering(o1, o2);
+
+		} else if (Block.LEFT.equalsIgnoreCase(o1Alignment)) {
 
 			return -1;
-		} else if (Block.RIGHT.equalsIgnoreCase(o1Allignment)) {
+		
+		} else if (Block.RIGHT.equalsIgnoreCase(o1Alignment)) {
+		
 			return 1;
+		
 		}
+
 		return 0;
+	
 	}
 
 	private int pcamdOrdering(SpatialEntity o1, SpatialEntity o2) {
@@ -88,27 +123,39 @@ public class SpatialOrdering implements Comparator<SpatialEntity> {
 	}
 
 	private int horizontalOrdering(SpatialEntity o1, SpatialEntity o2) {
+
 		int x1Diff = o1.getX1() - o2.getX1();
+		
 		if (x1Diff == 0)
 			return o1.getX2() - o2.getX2();
+		
 		return x1Diff;
+	
 	}
 
 	private int verticalOrdering(SpatialEntity o1, SpatialEntity o2) {
+	
 		Block block = (Block) o1;
+		
 		PageBlock page = block.getPage();
+		
 		int y1Diff = o1.getY1() - o2.getY1();
 		
-		if (Math.abs(y1Diff) < page.getMostPopularWordHeightPage()/2)
-			return (Math.abs(o1.getY2() - o2.getY2()) < page
-					.getMostPopularWordHeightPage()) ? 0 : o1.getY2()
-					- o2.getY2();
+		// Superscripts and subscripts
+		if ( Math.abs(y1Diff) < page.getMostPopularWordHeightPage()/2 ) {
+
+			int y2Diff = o1.getY2() - o2.getY2();
+			
+			if( Math.abs( y2Diff ) < page.getMostPopularWordHeightPage() * 1.5 ) {
+				return 0;
+			} else {
+				return y2Diff;
+			}
+			
+		}
+			
 		return y1Diff;
-		/*int y1Diff = o1.getY1() - o2.getY1();
-		if (y1Diff==0)
-			return o1.getY2()
-					- o2.getY2();
-		return y1Diff;*/
+
 	}
 
 	
