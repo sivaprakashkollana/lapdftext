@@ -126,6 +126,8 @@ public class RuleBasedParser implements Parser {
 			pageList.add(pageBlock);
 			
 			pageWordBlockList = pageExtractor.next();
+			if(pageWordBlockList.isEmpty())
+				continue;
 
 			idGenerator = pageBlock.initialize(pageWordBlockList, idGenerator);
 

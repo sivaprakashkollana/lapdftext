@@ -170,8 +170,13 @@ public class JPedalExtractor implements Extractor {
 		
 		// If there are no words on the page (a common situation 
 		// with splashy handouts), we skip to the next page. 
+
+		
 		if( words == null ) {
 			currentPage++;
+			WordBlock wordBlock = modelFactory.createWordBlock(0, 1, 0,
+					1, 1, null, null, null);
+			wordListPerPage.add(wordBlock);
 			PDFDecoder.flushObjectValues(false);
 			return;
 		}
@@ -184,6 +189,7 @@ public class JPedalExtractor implements Extractor {
 			wordListPerPage.clear();
 		}
 
+		
 		while (wordIterator.hasNext()) {
 			
 			currentWord = wordIterator.next();
@@ -232,8 +238,8 @@ public class JPedalExtractor implements Extractor {
 				decodeFile();
 
 			} catch (EmptyPDFException e) {
-			
-				return False;
+				
+				return this.hasNext();
 
 			} catch (Exception e) {
 			
@@ -256,6 +262,9 @@ public class JPedalExtractor implements Extractor {
 
 	@Override
 	public List<WordBlock> next() {
+		if(wordListPerPage == null){
+			return new ArrayList<WordBlock>();
+		}
 		return new ArrayList<WordBlock>(wordListPerPage);
 	}
 
