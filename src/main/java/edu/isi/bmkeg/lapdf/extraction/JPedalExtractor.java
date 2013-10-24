@@ -165,7 +165,7 @@ public class JPedalExtractor implements Extractor {
 				dimensions[0], dimensions[1], dimensions[2], dimensions[3], 
 				currentPage,
 				true, 
-				"&:=()!;\\/\"\"\'\'"
+				" "
 				);
 		
 		// If there are no words on the page (a common situation 
@@ -233,7 +233,7 @@ public class JPedalExtractor implements Extractor {
 
 			} catch (EmptyPDFException e) {
 			
-				return false;
+				return False;
 
 			} catch (Exception e) {
 			
